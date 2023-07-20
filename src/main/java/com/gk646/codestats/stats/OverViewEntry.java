@@ -1,13 +1,13 @@
 package com.gk646.codestats.stats;
 
-public record OverViewEntry(
-
-
-        String name,
-        int sizeSum,
-        int sizeMax,
-        int sizeAvg,
-        int lines,
-        int linesMin,
-        int linesMax
-) {}
+public class OverViewEntry {
+    public String name;
+    public int count;
+    public int sizeSum;
+    public int sizeMax;
+    public int sizeAvg;
+    public int lines;
+    public int linesMin;
+    public int linesMax;
+    public int linesCode;
+}

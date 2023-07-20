@@ -16,8 +16,6 @@ public class ToolBarAction extends AnAction {
                 String projectPath = baseDir.getPath();
                 Messages.showMessageDialog(project, "Project name: " + project.getName() + " base path : " + projectPath, "Info", Messages.getInformationIcon());
             }
-            // Now you have the path to the project directory.
-            // You can use this path to read files in the project.
         }
     }
 }
