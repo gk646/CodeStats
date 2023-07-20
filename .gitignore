@@ -9,6 +9,13 @@ build/
 .idea/jarRepositories.xml
 .idea/compiler.xml
 .idea/libraries/
+.idea
+.run
+gradlew.bat
+gradlew
+gradle.properties
+build.gradle.kts
+settings.gradle.kts
 *.iws
 *.iml
 *.ipr

@@ -1,0 +1,41 @@
+<!-- Plugin Configuration File. Read more: https://plugins.jetbrains.com/docs/intellij/plugin-configuration-file.html -->
+<idea-plugin>
+    <!-- Unique identifier of the plugin. It should be FQN. It cannot be changed between the plugin versions. -->
+    <id>com.gk646.CodeStats</id>
+
+    <!-- Public plugin name should be written in Title Case.
+         Guidelines: https://plugins.jetbrains.com/docs/marketplace/plugin-overview-page.html#plugin-name -->
+    <name>CodeStats</name>
+
+    <!-- A displayed Vendor name or Organization ID displayed on the Plugins Page. -->
+    <vendor email="lukas.gilch@gmx.de" url="https://www.yourcompany.com">gk646</vendor>
+
+    <!-- Description of the plugin displayed on the Plugin Page and IDE Plugin Manager.
+         Simple HTML elements (text formatting, paragraphs, and lists) can be added inside of <![CDATA[ ]]> tag.
+         Guidelines: https://plugins.jetbrains.com/docs/marketplace/plugin-overview-page.html#plugin-description -->
+    <description><![CDATA[
+    A plugin that shows useful code stats about your project.
+  ]]></description>
+
+    <!-- Product and plugin compatibility requirements.
+         Read more: https://plugins.jetbrains.com/docs/intellij/plugin-compatibility.html -->
+    <depends>com.intellij.modules.platform
+    </depends>
+
+    <!-- Extension points defined by the plugin.
+         Read more: https://plugins.jetbrains.com/docs/intellij/plugin-extension-points.html -->
+    <extensions defaultExtensionNs="com.intellij">
+        <toolWindow id="CodeStats" anchor="bottom" factoryClass="com.gk646.codestats.CodeStatsWindow"/>
+        <configurable id="CodeStatsSettings" displayName="Code Stats" instance="com.gk646.codestats.settings.Settings"/>
+    </extensions>
+    <idea-version since-build="222.3345.118"/>
+
+    <actions>
+        <group id="MyPlugin.Actions" text="MyPlugin" description="Actions for MyPlugin">
+            <add-to-group group-id="ToolsMenu" anchor="last"/>
+            <action id="MyPlugin.CalculateStats" class="com.gk646.codestats.ToolBarAction" text="Calculate Code Stats"
+                    description="Calculates code statistics for the current project"/>
+        </group>
+    </actions>
+
+</idea-plugin>
