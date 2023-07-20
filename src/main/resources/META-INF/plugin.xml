@@ -21,13 +21,20 @@
          Read more: https://plugins.jetbrains.com/docs/intellij/plugin-compatibility.html -->
     <depends>com.intellij.modules.platform
     </depends>
-
     <!-- Extension points defined by the plugin.
          Read more: https://plugins.jetbrains.com/docs/intellij/plugin-extension-points.html -->
     <extensions defaultExtensionNs="com.intellij">
         <toolWindow id="CodeStats" anchor="bottom" factoryClass="com.gk646.codestats.CodeStatsWindow"/>
-        <configurable id="CodeStatsSettings" displayName="Code Stats" instance="com.gk646.codestats.settings.Settings"/>
+        <applicationConfigurable id="CodeStatsConfigurable" displayName="Code Stats" groupId="tools" instance="com.gk646.codestats.settings.Settings"/>
+        <applicationService serviceImplementation="com.gk646.codestats.settings.Save"/>
     </extensions>
+
+    <projectListeners>
+        <listener
+                class="com.gk646.codestats.CodeStatsWindow"
+                topic="com.intellij.openapi.project.ProjectManagerListener"/>
+    </projectListeners>
+
     <idea-version since-build="222.3345.118"/>
 
     <actions>
