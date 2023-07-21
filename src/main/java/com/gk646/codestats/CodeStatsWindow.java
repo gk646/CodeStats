@@ -66,7 +66,6 @@ public class CodeStatsWindow implements ToolWindowFactory, ProjectManagerListene
 
     @Override
     public void projectOpened(@NotNull Project project) {
-        var prm = ProjectRootManager.getInstance(project);
         parser = new Parser(project.getBasePath());
     }
 }
