@@ -131,9 +131,7 @@ public class Settings implements Configurable {
         JButton addButton = new JButton("Add...");
         addButton.addActionListener(e -> {
             FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor();
-            FileChooser.chooseFile(descriptor, null, null, file -> {
-                excludedDirectoriesField.addElement(file.getPath());
-            });
+            FileChooser.chooseFile(descriptor, CodeStatsWindow.project, null, file -> excludedDirectoriesField.addElement(file.getPath()));
         });
 
 
