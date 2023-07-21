@@ -27,12 +27,13 @@
         <toolWindow id="CodeStats" anchor="bottom" factoryClass="com.gk646.codestats.CodeStatsWindow"/>
         <applicationConfigurable id="CodeStatsConfigurable" displayName="Code Stats" groupId="tools" instance="com.gk646.codestats.settings.Settings"/>
         <applicationService serviceImplementation="com.gk646.codestats.settings.Save"/>
+        <notificationGroup displayType="BALLOON" id="CodeStats" isLogByDefault="false"/>
     </extensions>
 
     <projectListeners>
-        <listener
-                class="com.gk646.codestats.CodeStatsWindow"
+        <listener class="com.gk646.codestats.CodeStatsWindow"
                 topic="com.intellij.openapi.project.ProjectManagerListener"/>
+        <listener class="com.gk646.codestats.CodeStatsWindow" topic="com.intellij.openapi.wm.ex.ToolWindowManagerListener"/>
     </projectListeners>
 
     <idea-version since-build="222.3345.118"/>

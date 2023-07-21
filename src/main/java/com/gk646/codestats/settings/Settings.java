@@ -1,6 +1,6 @@
 package com.gk646.codestats.settings;
 
-import com.gk646.codestats.stats.StatEntry;
+import com.gk646.codestats.CodeStatsWindow;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
@@ -30,7 +30,11 @@ public class Settings implements Configurable {
     private JBTextField excludedFileTypesField;
     private JBTextField includedFileTypesField;
     private JBTextField separateTabsField;
-    private JBCheckBox someCheckBox;
+    private JBCheckBox exclude_idea;
+    private JBCheckBox exclude_npm;
+    private JBCheckBox exclude_compiler;
+    private JBCheckBox exclude_git;
+
     private DefaultListModel<String> excludedDirectoriesField;
 
     @Nls(capitalization = Nls.Capitalization.Title)
@@ -58,12 +62,12 @@ public class Settings implements Configurable {
 
         constraints.gridx = 1;
         constraints.weightx = 1;
-        excludedFileTypesField = new JBTextField(30);
+        excludedFileTypesField = new JBTextField(20);
         panel.add(excludedFileTypesField, constraints);
 
         constraints.weightx = 0;
         constraints.gridx = 2;
-        panel.add(new JLabel("(Example: .txt;mp3"), constraints);
+        panel.add(new JLabel("(Example: txt;mp3"), constraints);
 
         //included files types
         constraints.gridy = 1;
@@ -72,12 +76,12 @@ public class Settings implements Configurable {
 
         constraints.gridx = 1;
         constraints.weightx = 1;
-        includedFileTypesField = new JBTextField(30);
+        includedFileTypesField = new JBTextField(20);
         panel.add(includedFileTypesField, constraints);
 
         constraints.gridx = 2;
         constraints.weightx = 0;
-        panel.add(new JLabel("(Example: .txt; .md)"), constraints);
+        panel.add(new JLabel("(Example: txt;md)"), constraints);
 
         constraints.gridy = 2;
         constraints.gridx = 0;
@@ -85,12 +89,12 @@ public class Settings implements Configurable {
 
         constraints.gridx = 1;
         constraints.weightx = 1;
-        separateTabsField = new JBTextField(30);
+        separateTabsField = new JBTextField(20);
         panel.add(separateTabsField, constraints);
 
         constraints.gridx = 2;
         constraints.weightx = 0;
-        panel.add(new JLabel("(Example: .html; .css)"), constraints);
+        panel.add(new JLabel("(Example: html;css)"), constraints);
 
 
         excludedDirectoriesField = new DefaultListModel<>();
@@ -98,7 +102,7 @@ public class Settings implements Configurable {
         JList<String> list = new JBList<>(excludedDirectoriesField);
 
         JScrollPane scrollPane = new JBScrollPane(list);
-        scrollPane.setPreferredSize(new Dimension(200, 120));
+        scrollPane.setPreferredSize(new Dimension(150, 120));
 
         JButton addButton = new JButton("Add...");
         addButton.addActionListener(e -> {
@@ -148,12 +152,24 @@ public class Settings implements Configurable {
         constraints.gridx = 1;
 
         //checkboxes
-        constraints.gridy = constraints.gridy + 1;
-        someCheckBox = new JBCheckBox("Exclude .idea dir");
-        panel.add(someCheckBox, constraints);
+        constraints.gridy++;
+        exclude_idea = new JBCheckBox("Exclude IDE configuration directories (.idea)");
+        panel.add(exclude_idea, constraints);
+
+        constraints.gridy++;
+        exclude_compiler = new JBCheckBox("Exclude compiler output dir (out)");
+        panel.add(exclude_compiler, constraints);
+
+        constraints.gridy++;
+        exclude_npm = new JBCheckBox("Exclude npm dir (node_modules)");
+        panel.add(exclude_npm, constraints);
+
+        constraints.gridy++;
+        exclude_git = new JBCheckBox("Exclude Git directory (.git)");
+        panel.add(exclude_git, constraints);
+
 
         JPanel wrapperPanel = new JPanel(new BorderLayout());
-        // Add your panel to the NORTH position
         wrapperPanel.add(panel, BorderLayout.NORTH);
 
         return wrapperPanel;
@@ -165,7 +181,10 @@ public class Settings implements Configurable {
         return !excludedFileTypesField.getText().equals(settings.excludedFileTypes)
                 || !includedFileTypesField.getText().equals(settings.includedFileTypes)
                 || !separateTabsField.getText().equals(settings.separateTabsTypes)
-                || someCheckBox.isSelected() != settings.someOption
+                || exclude_idea.isSelected() != settings.exclude_idea
+                || exclude_npm.isSelected() != settings.exclude_npm
+                || exclude_compiler.isSelected() != settings.exclude_compiler
+                || exclude_git.isSelected() != settings.exclude_git
                 || !Collections.list(excludedDirectoriesField.elements()).equals(settings.excludedDirectories);
     }
 
@@ -176,25 +195,32 @@ public class Settings implements Configurable {
         excludedFileTypesField.setText(settings.excludedFileTypes);
         includedFileTypesField.setText(settings.includedFileTypes);
         separateTabsField.setText(settings.separateTabsTypes);
-        someCheckBox.setSelected(settings.someOption);
+        exclude_idea.setSelected(settings.exclude_idea);
+        exclude_npm.setSelected(settings.exclude_npm);
+        exclude_compiler.setSelected(settings.exclude_compiler);
+        exclude_git.setSelected(settings.exclude_git);
+
         excludedDirectoriesField.clear();
         for (String dir : settings.excludedDirectories) {
             excludedDirectoriesField.addElement(dir);
         }
+        excludedFileTypesField.setText(settings.excludedFileTypes);
+        includedFileTypesField.setText(settings.includedFileTypes);
+        separateTabsField.setText(settings.separateTabsTypes);
     }
 
     @Override
     public void apply() {
         Save settings = Save.getInstance();
+        settings.excludedDirectories = Collections.list(excludedDirectoriesField.elements());
         settings.excludedFileTypes = excludedFileTypesField.getText();
         settings.includedFileTypes = includedFileTypesField.getText();
         settings.separateTabsTypes = separateTabsField.getText();
-        settings.someOption = someCheckBox.isSelected();
-        settings.excludedDirectories = Collections.list(excludedDirectoriesField.elements());
-    }
+        settings.exclude_idea = exclude_idea.isSelected();
+        settings.exclude_npm = exclude_npm.isSelected();
+        settings.exclude_compiler = exclude_compiler.isSelected();
+        settings.exclude_git = exclude_git.isSelected();
 
-    public StatEntry[] getTables() {
-        Save.getInstance();
-        return new StatEntry[]{new StatEntry("sd", 1, 1, 1, 1)};
+        CodeStatsWindow.parser.updateState();
     }
 }
