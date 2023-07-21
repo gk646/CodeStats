@@ -24,7 +24,7 @@
     <!-- Extension points defined by the plugin.
          Read more: https://plugins.jetbrains.com/docs/intellij/plugin-extension-points.html -->
     <extensions defaultExtensionNs="com.intellij">
-        <toolWindow id="CodeStats" anchor="bottom" factoryClass="com.gk646.codestats.CodeStatsWindow"/>
+        <toolWindow id="CodeStats" anchor="bottom" factoryClass="com.gk646.codestats.CodeStatsWindow" icon="icons/CodeStatsIcon.png"/>
         <applicationConfigurable id="CodeStatsConfigurable" displayName="Code Stats" groupId="tools" instance="com.gk646.codestats.settings.Settings"/>
         <applicationService serviceImplementation="com.gk646.codestats.settings.Save"/>
         <notificationGroup displayType="BALLOON" id="CodeStats" isLogByDefault="false"/>

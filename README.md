@@ -9,7 +9,7 @@ An IntelliJ plugin to give you useful stats about your code
 - **Open Source**
     - No malicious use of data
 - Speed and Efficiency
-    - Parse files very fast and can even handle large files by streaming them
+    - Parses files very fast and handles large files by streaming
 - Features
     - Counts file size, blank lines and comments and documentation and more!
 - Integration
