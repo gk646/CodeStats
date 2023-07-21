@@ -26,20 +26,22 @@ package com.gk646.codestats;
 
 import com.gk646.codestats.settings.Settings;
 import com.gk646.codestats.stats.Parser;
+import com.intellij.icons.AllIcons;
+import com.intellij.openapi.actionSystem.ActionToolbar;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManagerListener;
-import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowFactory;
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener;
-import com.intellij.ui.components.JBPanel;
 import com.intellij.ui.components.JBTabbedPane;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentFactory;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.JButton;
 import javax.swing.JPanel;
 import javax.swing.JTabbedPane;
 import java.awt.BorderLayout;
@@ -47,7 +49,7 @@ import java.awt.FlowLayout;
 
 public class CodeStatsWindow implements ToolWindowFactory, ProjectManagerListener, ToolWindowManagerListener {
     public static final JTabbedPane tabbedPane = new JBTabbedPane();
-    public static final JPanel sumPane = new JBPanel<>();
+
     public static Parser parser;
     public static Project project;
 
@@ -55,24 +57,37 @@ public class CodeStatsWindow implements ToolWindowFactory, ProjectManagerListene
     public void createToolWindowContent(@NotNull Project project, @NotNull com.intellij.openapi.wm.ToolWindow toolWindow) {
         CodeStatsWindow.project = project;
 
-        JButton refreshButton = new JButton("Refresh");
-        refreshButton.addActionListener(e -> update());
+        //refresh button
+        AnAction refreshAction = new AnAction("Refresh", "Get CodeStats!", AllIcons.Actions.Refresh) {
+            @Override
+            public void actionPerformed(@NotNull AnActionEvent e) {
+                CodeStatsWindow.this.update();
+            }
+        };
+        ActionButton refreshButton = new ActionButton(refreshAction, refreshAction.getTemplatePresentation(), "Refresh", ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE);
 
-        JButton settingsButton = new JButton("Settings");
-        settingsButton.addActionListener(e -> ShowSettingsUtil.getInstance().showSettingsDialog(project, Settings.class));
+        //settings button
+        AnAction settingsAction = new AnAction("Settings", "Customize CodeStats!", AllIcons.General.GearPlain) {
+            @Override
+            public void actionPerformed(@NotNull AnActionEvent e) {
+                ShowSettingsUtil.getInstance().showSettingsDialog(project, Settings.class);
+            }
+        };
+        ActionButton settingsButton = new ActionButton(settingsAction, settingsAction.getTemplatePresentation(), "Settings", ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE);
 
-        // Create a panel and add the buttons to it
+
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
         buttonPanel.add(refreshButton);
         buttonPanel.add(settingsButton);
 
-        // Create a new panel, add the buttonPanel and tabbedPane to it
-        JPanel mainPanel = new JPanel(new BorderLayout());
+
+        var mainPanel = new JPanel(new BorderLayout());
+
         mainPanel.add(buttonPanel, BorderLayout.NORTH);
         mainPanel.add(tabbedPane, BorderLayout.CENTER);
-        mainPanel.add(sumPane,BorderLayout.EAST);
-        ContentFactory contentFactory = ContentFactory.getInstance();
-        Content content = contentFactory.createContent(mainPanel, "CodeStats", true);
+
+        var contentFactory = ContentFactory.getInstance();
+        var content = contentFactory.createContent(mainPanel, "CodeStats", true);
         toolWindow.getContentManager().addContent(content);
     }
 
@@ -85,7 +100,7 @@ public class CodeStatsWindow implements ToolWindowFactory, ProjectManagerListene
 
     public void update() {
         tabbedPane.removeAll();
-        parser.updatePane(tabbedPane);
+        parser.updatePane();
     }
 
     @Override

@@ -86,7 +86,7 @@ public class Settings implements Configurable {
 
         constraints.gridx = 1;
         constraints.weightx = 1;
-        excludedFileTypesField = new JBTextField(20);
+        excludedFileTypesField = new JBTextField(10);
         panel.add(excludedFileTypesField, constraints);
 
         constraints.weightx = 0;
@@ -100,7 +100,7 @@ public class Settings implements Configurable {
 
         constraints.gridx = 1;
         constraints.weightx = 1;
-        includedFileTypesField = new JBTextField(20);
+        includedFileTypesField = new JBTextField(10);
         panel.add(includedFileTypesField, constraints);
 
         constraints.gridx = 2;
@@ -113,7 +113,7 @@ public class Settings implements Configurable {
 
         constraints.gridx = 1;
         constraints.weightx = 1;
-        separateTabsField = new JBTextField(20);
+        separateTabsField = new JBTextField(10);
         panel.add(separateTabsField, constraints);
 
         constraints.gridx = 2;
@@ -126,7 +126,7 @@ public class Settings implements Configurable {
         JList<String> list = new JBList<>(excludedDirectoriesField);
 
         JScrollPane scrollPane = new JBScrollPane(list);
-        scrollPane.setPreferredSize(new Dimension(150, 120));
+        scrollPane.setPreferredSize(new Dimension(120, 120));
 
         JButton addButton = new JButton("Add...");
         addButton.addActionListener(e -> {

@@ -26,7 +26,7 @@ package com.gk646.codestats.stats;
 
 import com.gk646.codestats.CodeStatsWindow;
 import com.gk646.codestats.settings.Save;
-import com.gk646.codestats.tabs.IconCellRenderer;
+import com.gk646.codestats.ui.UIHelper;
 import com.gk646.codestats.util.StringParsing;
 import com.intellij.icons.AllIcons;
 import com.intellij.notification.Notification;
@@ -40,10 +40,12 @@ import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.table.JBTable;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.JTabbedPane;
+import javax.swing.JPanel;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableModel;
 import javax.swing.table.TableRowSorter;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
 import java.io.File;
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -55,14 +57,13 @@ import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.stream.Stream;
 
 public class Parser {
-    public String projectPathString;
-    public Path projectPath;
+    String projectPathString;
+    Path projectPath;
     HashSet<String> excludedTypes = new HashSet<>(16);
     HashSet<String> excludedDirs = new HashSet<>(16);
     HashSet<String> separateTabs = new HashSet<>(16);
@@ -78,6 +79,7 @@ public class Parser {
     public void updateState() {
         var save = Save.getInstance();
         overView.clear();
+        separateTabs.clear();
         excludedTypes.clear();
         excludedDirs.clear();
 
@@ -104,7 +106,7 @@ public class Parser {
         }
     }
 
-    public void updatePane(JTabbedPane pane) {
+    public void updatePane() {
         Task.Backgroundable task = new Task.Backgroundable(CodeStatsWindow.project, "Updating Code Stats", false) {
             @Override
             public void run(@NotNull ProgressIndicator indicator) {
@@ -113,7 +115,7 @@ public class Parser {
                 iterateFiles();
 
                 ApplicationManager.getApplication().invokeLater(() -> {
-                    rebuildTabbedPane(pane);
+                    rebuildTabbedPane();
                     var duration = System.currentTimeMillis() - time;
                     var notification = new Notification("CodeStats", "Code Stats", "Update completed in " + String.format("%.4f", duration / 1_000f) + " sec.", NotificationType.INFORMATION);
                     notification.setIcon(AllIcons.General.Information);
@@ -124,82 +126,123 @@ public class Parser {
         ProgressManager.getInstance().run(task);
     }
 
-    private void rebuildTabbedPane(JTabbedPane pane) {
+    private void rebuildTabbedPane() {
         Object[][] data = new Object[overView.size()][];
+        Object[][] footerData = new Object[][]{{"Total:", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}};
         int i = 0;
         for (var pair : overView.entrySet()) {
             var entry = pair.getValue();
-            data[i] = new Object[]{pair.getKey(), entry.count + "x", entry.sizeSum + "kb", entry.sizeMin + "kb", entry.sizeMax + "kb", entry.sizeAvg + "kb", entry.lines, entry.linesMin, entry.linesMax, entry.linesAvg, entry.linesCode};
+            data[i] = new Object[]{pair.getKey(), entry.count + "x", entry.sizeSum + "kb", entry.sizeMin + "kb", entry.sizeMax + "kb", entry.sizeSum / entry.count + "kb", entry.lines, entry.linesMin, entry.linesMax, entry.lines / entry.count, entry.linesCode};
+            footerData[0][1] = (int) footerData[0][1] + entry.count;
+            footerData[0][2] = (int) footerData[0][2] + entry.sizeSum;
+            footerData[0][3] = (int) footerData[0][3] + entry.sizeMin;
+            footerData[0][4] = (int) footerData[0][4] + entry.sizeMax;
+            footerData[0][5] = (int) footerData[0][5] + entry.sizeSum / entry.count;
+            footerData[0][6] = (int) footerData[0][6] + entry.lines;
+            footerData[0][7] = (int) footerData[0][7] + entry.linesMin;
+            footerData[0][8] = (int) footerData[0][8] + entry.linesMax;
+            footerData[0][9] = (int) footerData[0][9] + entry.lines / entry.count;
+            footerData[0][10] = (int) footerData[0][10] + entry.linesCode;
             i++;
         }
         String[] columnNames = {"Extension", "Count", "Size SUM", "Size MIN", "Size MAX", "Size AVG", "Lines", "Lines MIN", "Lines MAX", "Lines AVG", "Lines CODE"};
 
-        DefaultTableModel model = new DefaultTableModel(data, columnNames);
+        var model = new DefaultTableModel(data, columnNames);
         var table = new JBTable(model);
 
+        //table ui settings
+        table.setDefaultEditor(Object.class, null);
         table.setEnableAntialiasing(true);
         table.setStriped(false);
         table.setBorder(null);
         table.getTableHeader().setReorderingAllowed(false);
 
+        //creating the sorting
         TableRowSorter<TableModel> sorter = new TableRowSorter<>(model);
+        table.setRowSorter(UIHelper.getOverViewTableSorter(sorter));
 
-        sorter.setComparator(1, Comparator.comparingInt(a -> Integer.parseInt(((String) a).replace("x", ""))));
-        sorter.setComparator(2, Comparator.comparingInt(a -> Integer.parseInt(((String) a).replace("kb", ""))));
-        sorter.setComparator(3, Comparator.comparingInt(a -> Integer.parseInt(((String) a).replace("kb", ""))));
-        sorter.setComparator(4, Comparator.comparingInt(a -> Integer.parseInt(((String) a).replace("kb", ""))));
-        sorter.setComparator(5, Comparator.comparingInt(a -> Integer.parseInt(((String) a).replace("kb", ""))));
+        //set table renderer
+        table.setDefaultRenderer(Object.class, UIHelper.OverViewTableCellRenderer);
 
-        sorter.setComparator(6, Comparator.comparingInt(a -> (Integer) a));
-        sorter.setComparator(7, Comparator.comparingInt(a -> (Integer) a));
-        sorter.setComparator(8, Comparator.comparingInt(a -> (Integer) a));
-        sorter.setComparator(9, Comparator.comparingInt(a -> (Integer) a));
-        sorter.setComparator(10, Comparator.comparingInt(a -> (Integer) a));
+        //creating the footer
+        model = new DefaultTableModel(footerData, new String[]{"", "", "", "", "", "", "", "", "", "", ""});
+        var footer = new JBTable(model);
 
+        //ui settings footer
+        footer.setDefaultEditor(Object.class, null);
+        footer.setDefaultRenderer(Object.class, UIHelper.getBoldRendere());
 
-        table.setRowSorter(sorter);
-        for (int columnIndex = 0; columnIndex < table.getColumnCount(); columnIndex++) {
-            table.getColumnModel().getColumn(columnIndex).setCellRenderer(new IconCellRenderer());
-        }
+        JPanel panel = new JPanel(new GridBagLayout());
+        GridBagConstraints gbc = new GridBagConstraints();
 
-        pane.addTab("OverView", new JBScrollPane(table));
+        // Add main table
+        panel.add(new JBScrollPane(table), UIHelper.setMainTableConstraint(gbc));
 
+        // Add footer table
+        panel.add(footer, UIHelper.setFooterTableConstraint(gbc));
+        CodeStatsWindow.tabbedPane.addTab("OverView", AllIcons.Nodes.HomeFolder, panel);
+
+        //build tabs
         for (var pair : tabs.entrySet()) {
             var fileList = pair.getValue();
-            if (fileList.isEmpty()) continue;
+            if (fileList.isEmpty()) continue; //skip on empty separate tab type
 
             data = new Object[fileList.size()][];
+            footerData = new Object[][]{{"Total:", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}};
             i = 0;
             for (var entry : fileList) {
-                data[i] = new Object[]{entry.name, entry.totalLines, entry.sourceCodeLines, (int) (entry.sourceCodeLines * 100.0f / entry.totalLines + 0.5) + "%",
-                        entry.commentLines, (int) (entry.commentLines * 100.0f / entry.totalLines + 0.5) + "%", entry.blankLines, (int) (entry.blankLines * 100.0f / entry.totalLines + 0.5) + "%"
-                };
+                data[i] = new Object[]{entry.name, entry.totalLines, entry.sourceCodeLines, (int) (entry.sourceCodeLines * 100.0f / entry.totalLines + 0.5) + "%", entry.commentLines, (int) (entry.commentLines * 100.0f / entry.totalLines + 0.5) + "%", entry.blankLines, (int) (entry.blankLines * 100.0f / entry.totalLines + 0.5) + "%"};
+                footerData[0][1] = (int) footerData[0][1] + entry.totalLines;
+                footerData[0][2] = (int) footerData[0][2] + entry.sourceCodeLines;
+                footerData[0][3] = (int) footerData[0][3] + (int) (entry.sourceCodeLines * 100.0f / entry.totalLines + 0.5);
+                footerData[0][4] = (int) footerData[0][4] + entry.commentLines;
+                footerData[0][5] = (int) footerData[0][5] + (int) (entry.commentLines * 100.0f / entry.totalLines + 0.5);
+                footerData[0][6] = (int) footerData[0][6] + entry.blankLines;
+                footerData[0][7] = (int) footerData[0][7] + (int) (entry.blankLines * 100.0f / entry.totalLines + 0.5);
                 i++;
             }
-            columnNames = new String[]{"Source File", "Total Lines", "Source Code Lines", "Source Code Lines [%]", "Comment Lines", "Comment Lines[%]", "Blank LInes", "Blank Lines [%]"};
+            //get average percentage
+            footerData[0][3] = (int) footerData[0][3] / fileList.size();
+            footerData[0][5] = (int) footerData[0][5] / fileList.size();
+            footerData[0][7] = (int) footerData[0][7] / fileList.size();
 
+
+            columnNames = new String[]{"Source File", "Total Lines", "Source Code Lines", "Source Code Lines [%]", "Comment Lines", "Comment Lines[%]", "Blank LInes", "Blank Lines [%]"};
 
             model = new DefaultTableModel(data, columnNames);
             table = new JBTable(model);
 
+            //main table ui settings
+            table.setDefaultEditor(Object.class, null);
             table.setEnableAntialiasing(true);
             table.setStriped(false);
             table.setBorder(null);
             table.getTableHeader().setReorderingAllowed(false);
 
+            //table sorter
             sorter = new TableRowSorter<>(model);
+            table.setRowSorter(UIHelper.getSeparateTabTableSorter(sorter));
 
-            sorter.setComparator(1, Comparator.comparingInt(a -> (Integer) a));
-            sorter.setComparator(2, Comparator.comparingInt(a -> (Integer) a));
-            sorter.setComparator(4, Comparator.comparingInt(a -> (Integer) a));
-            sorter.setComparator(6, Comparator.comparingInt(a -> (Integer) a));
+            table.setDefaultRenderer(Object.class, UIHelper.SeparateTableCellRenderer);
 
-            sorter.setComparator(3, Comparator.comparingInt(a -> Integer.parseInt(((String) a).replace("%", ""))));
-            sorter.setComparator(5, Comparator.comparingInt(a -> Integer.parseInt(((String) a).replace("%", ""))));
-            sorter.setComparator(7, Comparator.comparingInt(a -> Integer.parseInt(((String) a).replace("%", ""))));
+            //create footer
+            model = new DefaultTableModel(footerData, new String[]{"", "", "", "", "", "", "", ""});
+            footer = new JBTable(model);
 
-            table.setRowSorter(sorter);
-            pane.addTab(pair.getKey(), new JBScrollPane(table));
+            //footer ui settings
+            footer.setDefaultEditor(Object.class, null);
+            footer.setDefaultRenderer(Object.class, UIHelper.getBoldRendere());
+
+
+            panel = new JPanel(new GridBagLayout());
+            gbc = new GridBagConstraints();
+
+            //Add main table
+            panel.add(new JBScrollPane(table), UIHelper.setMainTableConstraint(gbc));
+
+            //Add footer table
+            panel.add(footer, UIHelper.setFooterTableConstraint(gbc));
+            CodeStatsWindow.tabbedPane.addTab(pair.getKey(), AllIcons.General.ArrowSplitCenterH, panel);
         }
     }
 
@@ -222,6 +265,7 @@ public class Parser {
                         entry.commentLines++;
                     }
                 }
+            } catch (MalformedInputException ignored) {
             } catch (IOException e) {
                 e.printStackTrace();
             }
