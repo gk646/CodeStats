@@ -30,6 +30,7 @@ public class StatEntry {
     int sourceCodeLines;
     int commentLines;
     int blankLines;
+    int docLines;
     StatEntry(String name) {
         this.name = name;
     }

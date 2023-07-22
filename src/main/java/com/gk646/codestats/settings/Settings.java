@@ -94,9 +94,9 @@ public class Settings implements Configurable {
         panel.add(new JLabel("(Example: txt;mp3"), constraints);
 
         //included files types
-        constraints.gridy = 1;
+        constraints.gridy++;
         constraints.gridx = 0;
-        panel.add(new JLabel("Included File Types:"), constraints);
+        panel.add(new JLabel("White-listed File Types:"), constraints);
 
         constraints.gridx = 1;
         constraints.weightx = 1;
@@ -107,7 +107,9 @@ public class Settings implements Configurable {
         constraints.weightx = 0;
         panel.add(new JLabel("(Example: txt;md)"), constraints);
 
-        constraints.gridy = 2;
+
+
+        constraints.gridy++;
         constraints.gridx = 0;
         panel.add(new JLabel("Separate Tabs Types:"), constraints);
 
@@ -152,27 +154,25 @@ public class Settings implements Configurable {
 
         // Add the components to the panel
         constraints.gridx = 0;
-        constraints.gridy = 3;
+        constraints.gridy++;
         panel.add(new JLabel("Excluded Directories:"), constraints);
 
         constraints.gridx = 1;
-        constraints.gridy = 3;
         panel.add(scrollPane, constraints);
 
         constraints.insets = JBUI.insets(1);
         constraints.gridx = 2;
-        constraints.gridy = 3;
         panel.add(addButton, constraints);
 
         constraints.insets = JBUI.insets(1);
         constraints.anchor = GridBagConstraints.NORTH;
         constraints.gridx = 2;
-        constraints.gridy = 4;
+        constraints.gridy++;
         panel.add(removeButton, constraints);
 
 
         constraints.gridx = 1;
-
+        constraints.gridy++;
         //checkboxes
         constraints.gridy++;
         exclude_idea = new JBCheckBox("Exclude IDE configuration directories (.idea)");
