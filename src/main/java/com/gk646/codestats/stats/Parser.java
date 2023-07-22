@@ -59,6 +59,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Locale;
 import java.util.stream.Stream;
 
 public class Parser {
@@ -132,16 +133,26 @@ public class Parser {
 
     private void rebuildTabbedPane() {
         Object[][] data = new Object[overView.size()][];
-        Object[][] footerData = new Object[][]{{"Total:", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}};
+        Object[][] footerData = new Object[][]{{"Total:", 0, 0L, 0L, 0L, 0L, 0, 0, 0, 0, 0}};
         int i = 0;
         for (var pair : overView.entrySet()) {
             var entry = pair.getValue();
-            data[i] = new Object[]{pair.getKey(), entry.count + "x", entry.sizeSum + "kb", entry.sizeMin + "kb", entry.sizeMax + "kb", entry.sizeSum / entry.count + "kb", entry.lines, entry.linesMin, entry.linesMax, entry.lines / entry.count, entry.linesCode};
+            data[i] = new Object[]{pair.getKey(),
+                    entry.count + "x",
+                    String.format(Locale.GERMAN, "%,d", entry.sizeSum / 1000) + "kb",
+                    String.format(Locale.GERMAN, "%,d", entry.sizeMin / 1000) + "kb",
+                    String.format(Locale.GERMAN, "%,d", entry.sizeMax / 1000) + "kb",
+                    String.format(Locale.GERMAN, "%,d", (entry.sizeSum / entry.count) / 1000) + "kb",
+                    entry.lines,
+                    entry.linesMin,
+                    entry.linesMax,
+                    entry.lines / entry.count,
+                    entry.linesCode};
             footerData[0][1] = (int) footerData[0][1] + entry.count;
-            footerData[0][2] = (int) footerData[0][2] + entry.sizeSum;
-            footerData[0][3] = (int) footerData[0][3] + entry.sizeMin;
-            footerData[0][4] = (int) footerData[0][4] + entry.sizeMax;
-            footerData[0][5] = (int) footerData[0][5] + entry.sizeSum / entry.count;
+            footerData[0][2] = (long) footerData[0][2] + entry.sizeSum / 1000;
+            footerData[0][3] = (long) footerData[0][3] + entry.sizeMin / 1000;
+            footerData[0][4] = (long) footerData[0][4] + entry.sizeMax / 1000;
+            footerData[0][5] = (long) footerData[0][5] + (entry.sizeSum / entry.count) / 1000;
             footerData[0][6] = (int) footerData[0][6] + entry.lines;
             footerData[0][7] = (int) footerData[0][7] + entry.linesMin;
             footerData[0][8] = (int) footerData[0][8] + entry.linesMax;
@@ -149,6 +160,7 @@ public class Parser {
             footerData[0][10] = (int) footerData[0][10] + entry.linesCode;
             i++;
         }
+
         String[] columnNames = {"Extension", "Count", "Size SUM", "Size MIN", "Size MAX", "Size AVG", "Lines", "Lines MIN", "Lines MAX", "Lines AVG", "Lines CODE"};
 
         var model = new DefaultTableModel(data, columnNames);
@@ -195,23 +207,22 @@ public class Parser {
             footerData = new Object[][]{{"Total:", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}};
             i = 0;
             for (var entry : fileList) {
-                data[i] = new Object[]{entry.name, entry.totalLines, entry.sourceCodeLines, (int) (entry.sourceCodeLines * 100.0f / entry.totalLines + 0.5) + "%", entry.commentLines, (int) (entry.commentLines * 100.0f / entry.totalLines + 0.5) + "%", entry.blankLines, (int) (entry.blankLines * 100.0f / entry.totalLines + 0.5) + "%"};
+                data[i] = new Object[]{entry.name, entry.totalLines, entry.sourceCodeLines, (int) (entry.sourceCodeLines * 100.0f / entry.totalLines + 0.5) + "%", entry.commentLines, entry.docLines, entry.blankLines, (int) (entry.blankLines * 100.0f / entry.totalLines + 0.5) + "%"};
                 footerData[0][1] = (int) footerData[0][1] + entry.totalLines;
                 footerData[0][2] = (int) footerData[0][2] + entry.sourceCodeLines;
                 footerData[0][3] = (int) footerData[0][3] + (int) (entry.sourceCodeLines * 100.0f / entry.totalLines + 0.5);
                 footerData[0][4] = (int) footerData[0][4] + entry.commentLines;
-                footerData[0][5] = (int) footerData[0][5] + (int) (entry.commentLines * 100.0f / entry.totalLines + 0.5);
+                footerData[0][5] = (int) footerData[0][5] + entry.docLines;
                 footerData[0][6] = (int) footerData[0][6] + entry.blankLines;
                 footerData[0][7] = (int) footerData[0][7] + (int) (entry.blankLines * 100.0f / entry.totalLines + 0.5);
                 i++;
             }
             //get average percentage
             footerData[0][3] = (int) footerData[0][3] / fileList.size();
-            footerData[0][5] = (int) footerData[0][5] / fileList.size();
             footerData[0][7] = (int) footerData[0][7] / fileList.size();
 
 
-            columnNames = new String[]{"Source File", "Total Lines", "Source Code Lines", "Source Code Lines [%]", "Comment Lines", "Comment Lines[%]", "Blank LInes", "Blank Lines [%]"};
+            columnNames = new String[]{"Source File", "Total Lines", "Source Code Lines", "Source Code Lines [%]", "Comment Lines", "Documentation Lines", "Blank LInes", "Blank Lines [%]"};
 
             model = new DefaultTableModel(data, columnNames);
             table = new JBTable(model);
@@ -256,10 +267,10 @@ public class Parser {
         if (separateTabs.contains(extension)) {
             //getting correct entry
             var entry = new StatEntry(path.getFileName().toString());
-            int size = 0;
+            long size = 0;
             var bool = new BoolContainer();
             try {
-                size = (int) (Files.size(path) / 1000);
+                size = Files.size(path);
                 try (Stream<String> linesStream = Files.newBufferedReader(path).lines()) {
                     linesStream.forEach(line -> {
                         line = line.trim();
@@ -292,7 +303,7 @@ public class Parser {
                     });
                 }
             } catch (UncheckedIOException ignored) {
-                if (size > 50000) {
+                if (size > 50000000) {
                     entry.totalLines = ParsingUtil.parseLargeNonUTFFile(path);
                 } else {
                     entry.totalLines = ParsingUtil.parseSmallNonUTFFile(path);
@@ -308,15 +319,15 @@ public class Parser {
 
             tabs.get(extension).add(entry);
         } else {
+
             int lines;
-            int size = 0;
+            long size = 0;
             try {
-                size = (int) (Files.size(path) / 1000);
-            } catch (IOException e) {
-                throw new RuntimeException(e);
+                size = Files.size(path);
+            } catch (IOException ignored) {
             }
 
-            if (size > 50000) {
+            if (size > 50000000) {
                 lines = ParsingUtil.parseLargeNonUTFFile(path);
             } else {
                 lines = ParsingUtil.parseSmallNonUTFFile(path);
