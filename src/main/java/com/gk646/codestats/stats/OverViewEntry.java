@@ -36,4 +36,26 @@ public class OverViewEntry {
     public int linesAvg;
     public int linesMax;
     public int linesCode;
+
+
+    public void setValues(int size, int totalLines, int sourceCodeLines) {
+        count++;
+
+        sizeSum += size;
+        if (size < sizeMin) {
+            sizeMin = size;
+        }
+        if (size > sizeMax) {
+            sizeMax = size;
+        }
+
+        lines += totalLines;
+        if (totalLines < linesMin) {
+            linesMin = totalLines;
+        }
+        if (totalLines > linesMax) {
+            linesMax = totalLines;
+        }
+        linesCode += sourceCodeLines;
+    }
 }

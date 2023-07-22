@@ -54,6 +54,7 @@ public class CodeStatsWindow implements ToolWindowFactory, ProjectManagerListene
 
     @Override
     public void createToolWindowContent(@NotNull Project project, @NotNull com.intellij.openapi.wm.ToolWindow toolWindow) {
+        parser = new Parser(project.getBasePath());
         CodeStatsWindow.project = project;
 
         //refresh button
@@ -100,10 +101,5 @@ public class CodeStatsWindow implements ToolWindowFactory, ProjectManagerListene
     public void update() {
         tabbedPane.removeAll();
         parser.updatePane();
-    }
-
-    @Override
-    public void projectOpened(@NotNull Project project) {
-        parser = new Parser(project.getBasePath());
     }
 }

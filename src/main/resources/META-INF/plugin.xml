@@ -16,12 +16,14 @@
     <description><![CDATA[
         <h2>CodeStats Plugin</h2>
     <p>
-        <b>CodeStats</b> is an open source IntelliJ plugin that provides insightful statistics about your project. It helps you understand your codebase better by providing detailed metrics such as:
+        <b>CodeStats</b> is an open source plugin for JetBrains IDE's that provides insightful statistics about your project. It helps you understand your codebase better by providing detailed metrics such as:
     </p>
     <ul>
         <li>Line counts</li>
         <li>File sizes</li>
-        <li>Blank Lines, Comment Lines</li>
+        <li>Blank Lines </li>
+        <li>Comment Lines</li>
+        <li>Documentations Lines</li>
         <li>And more...</li>
     </ul>
     <p>

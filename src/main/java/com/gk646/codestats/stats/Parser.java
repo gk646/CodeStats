@@ -27,7 +27,8 @@ package com.gk646.codestats.stats;
 import com.gk646.codestats.CodeStatsWindow;
 import com.gk646.codestats.settings.Save;
 import com.gk646.codestats.ui.UIHelper;
-import com.gk646.codestats.util.StringParsing;
+import com.gk646.codestats.util.BoolContainer;
+import com.gk646.codestats.util.ParsingUtil;
 import com.intellij.icons.AllIcons;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
@@ -49,7 +50,6 @@ import java.awt.GridBagLayout;
 import java.io.File;
 import java.io.IOException;
 import java.io.UncheckedIOException;
-import java.nio.charset.MalformedInputException;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -64,9 +64,10 @@ import java.util.stream.Stream;
 public class Parser {
     String projectPathString;
     Path projectPath;
-    HashSet<String> excludedTypes = new HashSet<>(16);
-    HashSet<String> excludedDirs = new HashSet<>(16);
-    HashSet<String> separateTabs = new HashSet<>(16);
+    HashSet<String> excludedTypes = new HashSet<>(16, 1);
+    HashSet<String> excludedDirs = new HashSet<>(16, 1);
+    HashSet<String> separateTabs = new HashSet<>(16, 1);
+    HashSet<String> whiteListTypes = new HashSet<>(16, 1);
     HashMap<String, OverViewEntry> overView = new HashMap<>(10);
     HashMap<String, ArrayList<StatEntry>> tabs = new HashMap<>(6);
 
@@ -81,10 +82,14 @@ public class Parser {
         overView.clear();
         separateTabs.clear();
         excludedTypes.clear();
-        excludedDirs.clear();
+        whiteListTypes.clear();
 
         Collections.addAll(excludedTypes, save.excludedFileTypes.split(";"));
         Collections.addAll(separateTabs, save.separateTabsTypes.split(";"));
+
+        if (!save.includedFileTypes.isEmpty()) {
+            Collections.addAll(whiteListTypes, save.includedFileTypes.split(";"));
+        }
 
         for (var dir : save.excludedDirectories) {
             excludedDirs.add(Path.of(dir).toString());
@@ -113,7 +118,6 @@ public class Parser {
                 var time = System.currentTimeMillis();
                 resetCache();
                 iterateFiles();
-
                 ApplicationManager.getApplication().invokeLater(() -> {
                     rebuildTabbedPane();
                     var duration = System.currentTimeMillis() - time;
@@ -246,92 +250,80 @@ public class Parser {
         }
     }
 
-    private void parseFile(File file, String extension) {
+    private void parseFile(Path path, String extension) {
         overView.computeIfAbsent(extension, k -> new OverViewEntry());
 
         if (separateTabs.contains(extension)) {
-            ArrayList<StatEntry> files = tabs.get(extension);
-            var entry = new StatEntry(file.getName());
+            //getting correct entry
+            var entry = new StatEntry(path.getFileName().toString());
+            int size = 0;
+            var bool = new BoolContainer();
             try {
-                String content = Files.readString(file.toPath());
-
-                String[] lines = content.split("\n");
-                entry.totalLines += lines.length;
-                for (String line : lines) {
-                    line = line.trim();
-                    if (line.isEmpty()) {
-                        entry.blankLines++;
-                    } else if (line.startsWith("//") || line.startsWith("/*") || line.endsWith("*/") || line.startsWith("*")) {
-                        entry.commentLines++;
-                    }
+                size = (int) (Files.size(path) / 1000);
+                try (Stream<String> linesStream = Files.newBufferedReader(path).lines()) {
+                    linesStream.forEach(line -> {
+                        line = line.trim();
+                        if (line.isEmpty()) {
+                            entry.blankLines++;
+                        } else if (line.startsWith("//")) {
+                            entry.commentLines++;
+                        } else if (line.startsWith("/*")) {
+                            bool.first = true;
+                            entry.commentLines++;
+                            if (line.startsWith("/**")) {
+                                bool.second = true;
+                                bool.first = false;
+                                entry.commentLines--;
+                                entry.docLines++;
+                            }
+                        } else if (bool.first || bool.second) {
+                            if (bool.second && line.startsWith("*")) {
+                                entry.docLines++;
+                            }
+                            if (line.contains("*/")) {
+                                bool.first = false;
+                                bool.second = false;
+                            }
+                        }
+                        if (bool.first) {
+                            entry.commentLines++;
+                        }
+                        entry.totalLines++;
+                    });
                 }
-            } catch (MalformedInputException ignored) {
-            } catch (IOException e) {
-                e.printStackTrace();
+            } catch (UncheckedIOException ignored) {
+                if (size > 50000) {
+                    entry.totalLines = ParsingUtil.parseLargeNonUTFFile(path);
+                } else {
+                    entry.totalLines = ParsingUtil.parseSmallNonUTFFile(path);
+                }
+            } catch (IOException ignored) {
             }
+
+            //setting separate tab entry data
             entry.sourceCodeLines = entry.totalLines - entry.blankLines - entry.commentLines;
 
-            var overview = overView.get(extension);
-            overview.count++;
-            int size = (int) (file.length() / 1000);
-            overview.sizeSum += size;
-            if (size < overview.sizeMin) {
-                overview.sizeMin = size;
-            }
-            if (size > overview.sizeMax) {
-                overview.sizeMax = size;
-            }
+            //setting over view entry data
+            overView.get(extension).setValues(size, entry.totalLines, entry.sourceCodeLines);
 
-            overview.lines += entry.totalLines;
-            if (entry.totalLines < overview.linesMin) {
-                overview.linesMin = entry.totalLines;
-            }
-            if (entry.totalLines > overview.linesMax) {
-                overview.linesMax = entry.totalLines;
-            }
-            overview.linesCode += entry.sourceCodeLines;
-
-            files.add(entry);
+            tabs.get(extension).add(entry);
         } else {
+            int lines;
+            int size = 0;
             try {
-                var overview = overView.get(extension);
-                overview.count++;
-
-                int lines = 0;
-                int size = (int) (file.length() / 1000);
-
-                if (size > 50000) {
-                    try (Stream<String> lineStream = Files.lines(file.toPath())) {
-                        lines = (int) lineStream.count();
-                    } catch (UncheckedIOException | IOException ignored) {
-                    }
-                } else {
-                    try {
-                        lines = Files.readString(file.toPath()).split("\n").length;
-                    } catch (MalformedInputException ignored) {
-                    }
-                }
-
-                overview.lines += lines;
-                if (lines < overview.linesMin) {
-                    overview.linesMin = lines;
-                }
-                if (lines > overview.linesMax) {
-                    overview.linesMax = lines;
-                }
-                overview.linesCode += lines;
-
-
-                overview.sizeSum += size;
-                if (size < overview.sizeMin) {
-                    overview.sizeMin = size;
-                }
-                if (size > overview.sizeMax) {
-                    overview.sizeMax = size;
-                }
+                size = (int) (Files.size(path) / 1000);
             } catch (IOException e) {
-                e.printStackTrace();
+                throw new RuntimeException(e);
             }
+
+            if (size > 50000) {
+                lines = ParsingUtil.parseLargeNonUTFFile(path);
+            } else {
+                lines = ParsingUtil.parseSmallNonUTFFile(path);
+            }
+
+            //setting overview entry data
+            overView.get(extension).setValues(size, lines, 0);
         }
     }
 
@@ -348,10 +340,13 @@ public class Parser {
 
                 @Override
                 public FileVisitResult visitFile(Path path, BasicFileAttributes attrs) {
-                    var file = path.toFile();
-                    String extension = StringParsing.getFileExtension(file.getName());
-                    if (!extension.isEmpty() && !excludedTypes.contains(extension)) {
-                        parseFile(file, extension);
+                    String extension = ParsingUtil.getFileExtension(path.getFileName().toString());
+                    if (whiteListTypes.isEmpty()) {
+                        if (!extension.isEmpty() && !excludedTypes.contains(extension)) {
+                            parseFile(path, extension);
+                        }
+                    } else if (whiteListTypes.contains(extension)) {
+                        parseFile(path, extension);
                     }
                     return FileVisitResult.CONTINUE;
                 }
@@ -366,7 +361,7 @@ public class Parser {
         tabs.clear();
 
         for (final var tab : separateTabs) {
-            tabs.put(tab, new ArrayList<>());
+            tabs.put(tab, new ArrayList<>(16));
         }
     }
 }
