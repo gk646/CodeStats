@@ -24,8 +24,14 @@
 
 package com.gk646.codestats.ui;
 
+import com.gk646.codestats.CodeStatsWindow;
 import com.intellij.icons.AllIcons;
+import com.intellij.openapi.actionSystem.ActionToolbar;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.ui.JBColor;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.BorderFactory;
 import javax.swing.JComponent;
@@ -138,4 +144,6 @@ public final class UIHelper {
         gbc.fill = GridBagConstraints.HORIZONTAL;
         return gbc;
     }
+
+
 }

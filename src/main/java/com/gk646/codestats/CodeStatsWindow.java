@@ -50,13 +50,12 @@ import java.awt.FlowLayout;
 @SuppressWarnings("DialogTitleCapitalization")
 public final class CodeStatsWindow implements ToolWindowFactory, ProjectManagerListener, ToolWindowManagerListener {
     public static final JTabbedPane tabbedPane = new JBTabbedPane();
-
     public static Parser parser;
     public static Project project;
 
     @Override
     public void createToolWindowContent(@NotNull Project project, @NotNull com.intellij.openapi.wm.ToolWindow toolWindow) {
-        parser = new Parser(project.getBasePath());
+        CodeStatsWindow.parser = new Parser(project.getBasePath());
         CodeStatsWindow.project = project;
 
         //refresh button
@@ -76,6 +75,7 @@ public final class CodeStatsWindow implements ToolWindowFactory, ProjectManagerL
             }
         };
         ActionButton settingsButton = new ActionButton(settingsAction, settingsAction.getTemplatePresentation(), "Settings", ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE);
+
 
 
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
