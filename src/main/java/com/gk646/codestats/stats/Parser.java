@@ -308,7 +308,7 @@ public final class Parser {
                     } else {
                         entry.totalLines = ParsingUtil.parseSmallNonUTFFile(path);
                     }
-                } catch (IOException ignored1) {
+                } catch (IOException ignored) {
                 }
             }
 
