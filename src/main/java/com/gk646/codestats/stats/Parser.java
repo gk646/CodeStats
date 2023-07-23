@@ -184,6 +184,7 @@ public final class Parser {
         var footer = new JBTable(model);
 
         //ui settings footer
+        footer.setStriped(false);
         footer.setDefaultEditor(Object.class, null);
         footer.setDefaultRenderer(Object.class, UIHelper.getBoldRendere());
 
@@ -246,6 +247,7 @@ public final class Parser {
             //footer ui settings
             footer.setDefaultEditor(Object.class, null);
             footer.setDefaultRenderer(Object.class, UIHelper.getBoldRendere());
+            footer.setStriped(false);
 
 
             panel = new JPanel(new GridBagLayout());

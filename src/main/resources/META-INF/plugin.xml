@@ -2,13 +2,13 @@
 <idea-plugin>
     <!-- Unique identifier of the plugin. It should be FQN. It cannot be changed between the plugin versions. -->
     <id>com.gk646.codeStats</id>
-    <version>1.0.0</version>
+    <version>1.1.0</version>
     <!-- Public plugin name should be written in Title Case.
          Guidelines: https://plugins.jetbrains.com/docs/marketplace/plugin-overview-page.html#plugin-name -->
     <name>CodeStats</name>
     <idea-version since-build="222.3345.118"/>
     <!-- A displayed Vendor name or Organization ID displayed on the Plugins Page. -->
-    <vendor email="" url="https://github.com/gk646/CodeStats">GitHub</vendor>
+    <vendor email="" url="https://github.com/gk646/CodeStats">gk646</vendor>
 
     <!-- Description of the plugin displayed on the Plugin Page and IDE Plugin Manager.
          Simple HTML elements (text formatting, paragraphs, and lists) can be added inside of <![CDATA[ ]]> tag.
@@ -46,8 +46,18 @@
 ]]></description>
 
     <change-notes><![CDATA[
-        Release 1.0.0!
+      <h2>Release 1.1.0</h2>
+      <ul>
+        <li>Improved general performance</li>
+        <li>Added accurate comment and documentation lines parsing</li>
+        <li>Added a file type white-list to settings</li>
+        <li>Added button to disable automatic updates</li>
+        <li>Added punctuation to file size numbers</li>
+      </ul>
+
+      <h2>Release 1.0.0!</h2>
 ]]></change-notes>
+
     <!-- Product and plugin compatibility requirements.
          Read more: https://plugins.jetbrains.com/docs/intellij/plugin-compatibility.html -->
     <depends>com.intellij.modules.platform
