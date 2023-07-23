@@ -24,16 +24,15 @@
 
 package com.gk646.codestats.stats;
 
-public class OverViewEntry {
-    public String name;
-    public int count;
-    public long sizeMin = Integer.MAX_VALUE;
-    public long sizeSum;
-    public long sizeMax;
-    public int lines;
-    public int linesMin = Integer.MAX_VALUE;
-    public int linesMax;
-    public int linesCode;
+public final class OverViewEntry {
+    int count;
+    long sizeMin = Integer.MAX_VALUE;
+    long sizeSum;
+    long sizeMax;
+    int lines;
+    int linesMin = Integer.MAX_VALUE;
+    int linesMax;
+    int linesCode;
 
 
     public void setValues(long size, int totalLines, int sourceCodeLines) {

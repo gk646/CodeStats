@@ -24,7 +24,7 @@
 
 package com.gk646.codestats.util;
 
-public class BoolContainer {
+public final class BoolContainer {
     public boolean first;
     public boolean second;
 }
