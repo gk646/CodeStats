@@ -1,6 +1,6 @@
 ## Code Stats
 
-CodeStats is a opensource statistics plugin for JetBrains IDE's with focus on a modern feel and look, performance and a good feature set.
+CodeStats is an opensource statistics plugin for JetBrains IDE's with focus on a modern feel and look, performance and a good feature set.
 
 
 <img src="pictures/overview.png" alt="The startup screen with a 10,10,10,2 Layer Network" width="900" height="300">
@@ -17,5 +17,5 @@ CodeStats is a opensource statistics plugin for JetBrains IDE's with focus on a 
 - Integration
     - CodeStats is nicely integrated with the IDE with its own toolwindow and settings menu
 - Customization
-    -Allows for file-type whitelisting, excluding fileypes, exluding folders and more!
+    -Allows for file-type whitelisting, excluding filetypes, excluding folders and more!
 
