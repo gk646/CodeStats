@@ -221,7 +221,7 @@ public final class Parser {
             footerData[0][7] = (int) footerData[0][7] / fileList.size();
 
 
-            columnNames = new String[]{"Source File", "Total Lines", "Source Code Lines", "Source Code Lines [%]", "Comment Lines", "Documentation Lines", "Blank LInes", "Blank Lines [%]"};
+            columnNames = new String[]{"Source File", "Total Lines", "Source Code Lines", "Source Code Lines [%]", "Comment Lines", "Documentation Lines", "Blank Lines", "Blank Lines [%]"};
 
             model = new DefaultTableModel(data, columnNames);
             table = new JBTable(model);
