@@ -67,15 +67,4 @@
                   topic="com.intellij.openapi.project.ProjectManagerListener"/>
         <listener class="com.gk646.codestats.CodeStatsWindow" topic="com.intellij.openapi.wm.ex.ToolWindowManagerListener"/>
     </projectListeners>
-
-
-
-    <actions>
-        <group id="MyPlugin.Actions" text="MyPlugin" description="Actions for MyPlugin">
-            <add-to-group group-id="ToolsMenu" anchor="last"/>
-            <action id="MyPlugin.CalculateStats" class="com.gk646.codestats.ToolBarAction" text="Calculate Code Stats"
-                    description="Calculates code statistics for the current project"/>
-        </group>
-    </actions>
-
 </idea-plugin>

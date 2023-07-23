@@ -28,11 +28,9 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
-import com.intellij.ui.components.JBCheckBox;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import com.intellij.util.xmlb.annotations.XCollection;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -41,25 +39,23 @@ import java.util.List;
         name = "com.gk646.codestats.settings.Save",
         storages = {@Storage("CodeStatsSettings.xml")}
 )
-public class Save implements PersistentStateComponent<Save> {
+public final class Save implements PersistentStateComponent<Save> {
     public String excludedFileTypes = "wav;ttf;sql;tmp;dmp;ico;dat;svg;class;svn-base;svn-work;Extra;gif;png;jpg;jpeg;bmp;tga;tiff;ear;war;zip;jar;iml;iws;ipr;bz2;gz;pyc";
     public String includedFileTypes = "";
-    public String separateTabsTypes = "java;cpp;c;hpp;h;rs;css;html;js;txt;php;py";
+    public String separateTabsTypes = "java;cpp;c;hpp;h;rs;css;html;js;txt;php;py;cs;go;rb;swift;ts;kt;sql;pl;lua;groovy;asp;aspx;jsp;json;xml;scss;less;sass;yaml;yml;sh;bat;ps1;md;f;r;m;asm;ada;scala;dart;jsx;julia";
     public boolean exclude_idea = true;
-
     public boolean exclude_npm = true;
     public boolean exclude_compiler = true;
     public boolean exclude_git = true;
+    public boolean disableAutoUpdate = false;
     @XCollection(propertyElementName = "excludedDirs", elementTypes = String.class)
 
     public List<String> excludedDirectories = new ArrayList<>();
-
 
     public static Save getInstance() {
         return ApplicationManager.getApplication().getService(Save.class);
     }
 
-    @Nullable
     @Override
     public Save getState() {
         return this;

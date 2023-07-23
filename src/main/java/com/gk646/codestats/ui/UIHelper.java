@@ -40,7 +40,7 @@ import java.awt.Font;
 import java.awt.GridBagConstraints;
 import java.util.Comparator;
 
-public class UIHelper {
+public final class UIHelper {
 
     public static final DefaultTableCellRenderer OverViewTableCellRenderer = getIconRenderer();
     public static final DefaultTableCellRenderer SeparateTableCellRenderer = getSeparateTableCellRenderer();
@@ -97,10 +97,10 @@ public class UIHelper {
     public static TableRowSorter<TableModel> getOverViewTableSorter(TableRowSorter<TableModel> sorter) {
         sorter.setComparator(1, Comparator.comparingInt(a -> Integer.parseInt(((String) a).replace("x", ""))));
 
-        sorter.setComparator(2, Comparator.comparingLong(a -> Long.parseLong(((String) a).replace("kb", "").replace(",", ""))));
-        sorter.setComparator(3, Comparator.comparingLong(a -> Long.parseLong(((String) a).replace("kb", "").replace(",", ""))));
-        sorter.setComparator(4, Comparator.comparingLong(a -> Long.parseLong(((String) a).replace("kb", "").replace(",", ""))));
-        sorter.setComparator(5, Comparator.comparingLong(a -> Long.parseLong(((String) a).replace("kb", "").replace(",", ""))));
+        sorter.setComparator(2, Comparator.comparingLong(a -> Long.parseLong(((String) a).replace("kb", "").replace(".", ""))));
+        sorter.setComparator(3, Comparator.comparingLong(a -> Long.parseLong(((String) a).replace("kb", "").replace(".", ""))));
+        sorter.setComparator(4, Comparator.comparingLong(a -> Long.parseLong(((String) a).replace("kb", "").replace(".", ""))));
+        sorter.setComparator(5, Comparator.comparingLong(a -> Long.parseLong(((String) a).replace("kb", "").replace(".", ""))));
 
         sorter.setComparator(6, Comparator.comparingInt(a -> (Integer) a));
         sorter.setComparator(7, Comparator.comparingInt(a -> (Integer) a));

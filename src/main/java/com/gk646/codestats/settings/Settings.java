@@ -35,7 +35,6 @@ import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.JBTextField;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.DefaultListModel;
 import javax.swing.JButton;
@@ -50,14 +49,15 @@ import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.util.Collections;
 
-public class Settings implements Configurable {
-    private JBTextField excludedFileTypesField;
-    private JBTextField includedFileTypesField;
-    private JBTextField separateTabsField;
-    private JBCheckBox exclude_idea;
-    private JBCheckBox exclude_npm;
-    private JBCheckBox exclude_compiler;
-    private JBCheckBox exclude_git;
+public final class Settings implements Configurable {
+    private static final JBCheckBox exclude_idea = new JBCheckBox("Exclude IDE configuration directories (.idea)");
+    private static final JBTextField excludedFileTypesField = new JBTextField(10);
+    private static final JBTextField includedFileTypesField = new JBTextField(10);
+    private static final JBTextField separateTabsField = new JBTextField(10);
+    private static final JBCheckBox exclude_npm = new JBCheckBox("Exclude compiler output dir (out)");
+    private static final JBCheckBox exclude_compiler = new JBCheckBox("Exclude npm dir (node_modules)");
+    private static final JBCheckBox exclude_git = new JBCheckBox("Exclude Git directory (.git)");
+    private static final JBCheckBox disableAutomaticUpdate = new JBCheckBox("Disable automatic update when opening CodeStats");
 
     private DefaultListModel<String> excludedDirectoriesField;
 
@@ -67,7 +67,7 @@ public class Settings implements Configurable {
         return "Code Stats";
     }
 
-    @Nullable
+
     @Override
     public JComponent createComponent() {
         JPanel panel = new JPanel(new GridBagLayout());
@@ -86,7 +86,6 @@ public class Settings implements Configurable {
 
         constraints.gridx = 1;
         constraints.weightx = 1;
-        excludedFileTypesField = new JBTextField(10);
         panel.add(excludedFileTypesField, constraints);
 
         constraints.weightx = 0;
@@ -100,13 +99,11 @@ public class Settings implements Configurable {
 
         constraints.gridx = 1;
         constraints.weightx = 1;
-        includedFileTypesField = new JBTextField(10);
         panel.add(includedFileTypesField, constraints);
 
         constraints.gridx = 2;
         constraints.weightx = 0;
         panel.add(new JLabel("(Example: txt;md)"), constraints);
-
 
 
         constraints.gridy++;
@@ -115,7 +112,6 @@ public class Settings implements Configurable {
 
         constraints.gridx = 1;
         constraints.weightx = 1;
-        separateTabsField = new JBTextField(10);
         panel.add(separateTabsField, constraints);
 
         constraints.gridx = 2;
@@ -147,9 +143,7 @@ public class Settings implements Configurable {
             }
         });
 
-        list.addListSelectionListener(e -> {
-            removeButton.setEnabled(list.getSelectedIndex() != -1);
-        });
+        list.addListSelectionListener(e -> removeButton.setEnabled(list.getSelectedIndex() != -1));
 
 
         // Add the components to the panel
@@ -174,20 +168,20 @@ public class Settings implements Configurable {
         constraints.gridx = 1;
         constraints.gridy++;
         //checkboxes
+
         constraints.gridy++;
-        exclude_idea = new JBCheckBox("Exclude IDE configuration directories (.idea)");
+        panel.add(disableAutomaticUpdate, constraints);
+
+        constraints.gridy++;
         panel.add(exclude_idea, constraints);
 
         constraints.gridy++;
-        exclude_compiler = new JBCheckBox("Exclude compiler output dir (out)");
         panel.add(exclude_compiler, constraints);
 
         constraints.gridy++;
-        exclude_npm = new JBCheckBox("Exclude npm dir (node_modules)");
         panel.add(exclude_npm, constraints);
 
         constraints.gridy++;
-        exclude_git = new JBCheckBox("Exclude Git directory (.git)");
         panel.add(exclude_git, constraints);
 
 
@@ -207,6 +201,7 @@ public class Settings implements Configurable {
                 || exclude_npm.isSelected() != settings.exclude_npm
                 || exclude_compiler.isSelected() != settings.exclude_compiler
                 || exclude_git.isSelected() != settings.exclude_git
+                || disableAutomaticUpdate.isSelected() != settings.disableAutoUpdate
                 || !Collections.list(excludedDirectoriesField.elements()).equals(settings.excludedDirectories);
     }
 
@@ -221,6 +216,7 @@ public class Settings implements Configurable {
         exclude_npm.setSelected(settings.exclude_npm);
         exclude_compiler.setSelected(settings.exclude_compiler);
         exclude_git.setSelected(settings.exclude_git);
+        disableAutomaticUpdate.setSelected(settings.disableAutoUpdate);
 
         excludedDirectoriesField.clear();
         for (String dir : settings.excludedDirectories) {
@@ -242,7 +238,7 @@ public class Settings implements Configurable {
         settings.exclude_npm = exclude_npm.isSelected();
         settings.exclude_compiler = exclude_compiler.isSelected();
         settings.exclude_git = exclude_git.isSelected();
-
+        settings.disableAutoUpdate = disableAutomaticUpdate.isSelected();
         CodeStatsWindow.parser.updateState();
     }
 }

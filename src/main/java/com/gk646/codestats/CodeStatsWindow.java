@@ -24,6 +24,7 @@
 
 package com.gk646.codestats;
 
+import com.gk646.codestats.settings.Save;
 import com.gk646.codestats.settings.Settings;
 import com.gk646.codestats.stats.Parser;
 import com.intellij.icons.AllIcons;
@@ -46,7 +47,8 @@ import javax.swing.JTabbedPane;
 import java.awt.BorderLayout;
 import java.awt.FlowLayout;
 
-public class CodeStatsWindow implements ToolWindowFactory, ProjectManagerListener, ToolWindowManagerListener {
+@SuppressWarnings("DialogTitleCapitalization")
+public final class CodeStatsWindow implements ToolWindowFactory, ProjectManagerListener, ToolWindowManagerListener {
     public static final JTabbedPane tabbedPane = new JBTabbedPane();
 
     public static Parser parser;
@@ -93,7 +95,7 @@ public class CodeStatsWindow implements ToolWindowFactory, ProjectManagerListene
 
     @Override
     public void toolWindowShown(@NotNull ToolWindow toolWindow) {
-        if (toolWindow.getId().equals("CodeStats")) {
+        if (toolWindow.getId().equals("CodeStats") && !Save.getInstance().disableAutoUpdate) {
             update();
         }
     }

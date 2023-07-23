@@ -29,7 +29,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
-public class ParsingUtil {
+public final class ParsingUtil {
 
     private ParsingUtil() {
     }
@@ -39,37 +39,30 @@ public class ParsingUtil {
         return (dotIndex == -1) ? "" : fileName.substring(dotIndex + 1);
     }
 
-    public static int parseLargeNonUTFFile(Path path) {
+    public static int parseLargeNonUTFFile(Path path) throws IOException {
         int lines = 0;
-        try (BufferedInputStream bis = new BufferedInputStream(Files.newInputStream(path))) {
-            byte[] buffer = new byte[262144];
-            int bytesRead;
-            while ((bytesRead = bis.read(buffer)) != -1) {
-                for (int i = 0; i < bytesRead; i++) {
-                    if (buffer[i] == 10) {
-                        lines++;
-                    }
-                }
-            }
-        } catch (IOException ignored) {
-        }
-        return lines;
-    }
-
-    public static int parseSmallNonUTFFile(Path path) {
-        int lines = 0;
-        try {
-            for (var b : Files.readAllBytes(path)) {
-                if (b == 10) {
+        BufferedInputStream bis = new BufferedInputStream(Files.newInputStream(path));
+        byte[] buffer = new byte[262144];
+        int bytesRead;
+        while ((bytesRead = bis.read(buffer)) != -1) {
+            for (int i = 0; i < bytesRead; i++) {
+                if (buffer[i] == 10) {
                     lines++;
                 }
             }
-        } catch (IOException ignored) {
+        }
+        bis.close();
+        return lines;
+    }
+
+    public static int parseSmallNonUTFFile(Path path) throws IOException {
+        int lines = 0;
+        for (var b : Files.readAllBytes(path)) {
+            if (b == 10) {
+                lines++;
+            }
         }
         return lines;
     }
 
-    public static void parseSourceFile(Path path) {
-
-    }
 }

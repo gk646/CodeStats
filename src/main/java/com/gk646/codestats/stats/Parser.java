@@ -62,19 +62,18 @@ import java.util.HashSet;
 import java.util.Locale;
 import java.util.stream.Stream;
 
-public class Parser {
-    String projectPathString;
-    Path projectPath;
-    HashSet<String> excludedTypes = new HashSet<>(16, 1);
-    HashSet<String> excludedDirs = new HashSet<>(16, 1);
-    HashSet<String> separateTabs = new HashSet<>(16, 1);
-    HashSet<String> whiteListTypes = new HashSet<>(16, 1);
-    HashMap<String, OverViewEntry> overView = new HashMap<>(10);
-    HashMap<String, ArrayList<StatEntry>> tabs = new HashMap<>(6);
+@SuppressWarnings("DialogTitleCapitalization")
+public final class Parser {
+    final HashSet<String> excludedTypes = new HashSet<>(16, 1);
+    final HashSet<String> excludedDirs = new HashSet<>(16, 1);
+    final HashSet<String> separateTabs = new HashSet<>(16, 1);
+    final HashSet<String> whiteListTypes = new HashSet<>(16, 1);
+    final HashMap<String, OverViewEntry> overView = new HashMap<>(10);
+    final HashMap<String, ArrayList<StatEntry>> tabs = new HashMap<>(6);
+    final Path projectPath;
 
     public Parser(String path) {
         this.projectPath = Path.of(path);
-        this.projectPathString = projectPath.toString();
         updateState();
     }
 
@@ -302,13 +301,15 @@ public class Parser {
                         entry.totalLines++;
                     });
                 }
-            } catch (UncheckedIOException ignored) {
-                if (size > 50000000) {
-                    entry.totalLines = ParsingUtil.parseLargeNonUTFFile(path);
-                } else {
-                    entry.totalLines = ParsingUtil.parseSmallNonUTFFile(path);
+            } catch (UncheckedIOException | IOException e) {
+                try {
+                    if (size > 50000000) {
+                        entry.totalLines = ParsingUtil.parseLargeNonUTFFile(path);
+                    } else {
+                        entry.totalLines = ParsingUtil.parseSmallNonUTFFile(path);
+                    }
+                } catch (IOException ignored1) {
                 }
-            } catch (IOException ignored) {
             }
 
             //setting separate tab entry data
@@ -320,18 +321,18 @@ public class Parser {
             tabs.get(extension).add(entry);
         } else {
 
-            int lines;
+            int lines = 0;
             long size = 0;
             try {
                 size = Files.size(path);
+                if (size > 50000000) {
+                    lines = ParsingUtil.parseLargeNonUTFFile(path);
+                } else {
+                    lines = ParsingUtil.parseSmallNonUTFFile(path);
+                }
             } catch (IOException ignored) {
             }
 
-            if (size > 50000000) {
-                lines = ParsingUtil.parseLargeNonUTFFile(path);
-            } else {
-                lines = ParsingUtil.parseSmallNonUTFFile(path);
-            }
 
             //setting overview entry data
             overView.get(extension).setValues(size, lines, 0);
