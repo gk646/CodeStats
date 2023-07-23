@@ -1,20 +1,17 @@
 ## Code Stats
 
-
-An IntelliJ plugin to give you useful stats about your code
-
+CodeStats is a opensource statistics plugin for JetBrains IDE's with focus on a modern feel and look, performance and a good feature set.
 
 #### Why choose Code Stats?
 
 - **Open Source**
-    - No malicious use of data
+    - the source code is open for review and contribution elimination the malicious use of data
 - Speed and Efficiency
-    - Parses files very fast and handles large files by streaming
+    - Optimized for speed it runs faster than other popular statistic plugins
 - Features
-    - Counts file size, blank lines and comments and documentation and more!
+    - Tracks file size, blank lines and comments and documentation and more!
 - Integration
-    - Customizable with an integrated custom settings menu
-
-
-
+    - CodeStats is nicely integrated with the IDE with its own toolwindow and settings menu
+- Customization
+    -Allows for file-type whitelisting, excluding fileypes, exluding folders and more!
 
