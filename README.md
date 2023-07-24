@@ -3,7 +3,7 @@
 CodeStats is an opensource statistics plugin for JetBrains IDE's with focus on a modern feel and look, performance and a good feature set.
 
 
-<img src="pictures/overview.png" alt="The startup screen with a 10,10,10,2 Layer Network" width="970" height="300">
+<img src="pictures/overview.png" alt="The startup screen of CodeStats" width="970" height="300">
 
 
 #### Why choose Code Stats?
