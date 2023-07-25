@@ -66,17 +66,16 @@ import java.util.stream.Stream;
 
 @SuppressWarnings("DialogTitleCapitalization")
 public final class Parser {
+    public  Path projectPath;
     final HashSet<String> excludedTypes = new HashSet<>(16, 1);
     final HashSet<String> excludedDirs = new HashSet<>(16, 1);
     final HashSet<String> separateTabs = new HashSet<>(16, 1);
     final HashSet<String> whiteListTypes = new HashSet<>(16, 1);
     final HashMap<String, OverViewEntry> overView = new HashMap<>(10);
     final HashMap<String, ArrayList<StatEntry>> tabs = new HashMap<>(6);
-    final Path projectPath;
     Charset charset = StandardCharsets.UTF_8;
 
-    public Parser(String path) {
-        this.projectPath = Path.of(path);
+    public Parser() {
         updateState();
     }
 
@@ -95,7 +94,7 @@ public final class Parser {
             Collections.addAll(whiteListTypes, save.includedFileTypes.split(";"));
         }
 
-        for(var dir : save.excludedDirectories){
+        for (var dir : save.excludedDirectories) {
             //to always get correct file separators
             excludedDirs.add(Path.of(dir).toString());
         }
@@ -289,7 +288,7 @@ public final class Parser {
                         line = line.trim();
                         if (line.isEmpty()) {
                             entry.blankLines++;
-                        } else if (line.startsWith("//")) {
+                        } else if (line.startsWith("//") || line.startsWith("#")) {
                             entry.commentLines++;
                         } else if (line.startsWith("/*")) {
                             bool.first = true;

@@ -34,7 +34,6 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManagerListener;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowFactory;
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener;
@@ -46,15 +45,18 @@ import javax.swing.JPanel;
 import javax.swing.JTabbedPane;
 import java.awt.BorderLayout;
 import java.awt.FlowLayout;
+import java.nio.file.Path;
 
 @SuppressWarnings("DialogTitleCapitalization")
-public final class CodeStatsWindow implements ToolWindowFactory, ProjectManagerListener, ToolWindowManagerListener {
+public final class CodeStatsWindow implements ToolWindowFactory, ToolWindowManagerListener {
     public static final JTabbedPane tabbedPane = new JBTabbedPane();
-    public static Parser parser;
+    public static Parser parser = new Parser();
     public static Project project;
 
     @Override
     public void createToolWindowContent(@NotNull Project project, @NotNull com.intellij.openapi.wm.ToolWindow toolWindow) {
+        parser.projectPath = Path.of(project.getBasePath());
+        CodeStatsWindow.project = project;
         //refresh button
         AnAction refreshAction = new AnAction("Refresh", "Get CodeStats!", AllIcons.Actions.Refresh) {
             @Override
@@ -87,12 +89,6 @@ public final class CodeStatsWindow implements ToolWindowFactory, ProjectManagerL
         var contentFactory = ContentFactory.getInstance();
         var content = contentFactory.createContent(mainPanel, "CodeStats", true);
         toolWindow.getContentManager().addContent(content);
-    }
-
-    @Override
-    public void projectOpened(Project project) {
-        CodeStatsWindow.parser = new Parser(project.getBasePath());
-        CodeStatsWindow.project = project;
     }
 
 
