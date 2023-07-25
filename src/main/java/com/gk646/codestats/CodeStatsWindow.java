@@ -55,9 +55,6 @@ public final class CodeStatsWindow implements ToolWindowFactory, ProjectManagerL
 
     @Override
     public void createToolWindowContent(@NotNull Project project, @NotNull com.intellij.openapi.wm.ToolWindow toolWindow) {
-        CodeStatsWindow.parser = new Parser(project.getBasePath());
-        CodeStatsWindow.project = project;
-
         //refresh button
         AnAction refreshAction = new AnAction("Refresh", "Get CodeStats!", AllIcons.Actions.Refresh) {
             @Override
@@ -77,7 +74,6 @@ public final class CodeStatsWindow implements ToolWindowFactory, ProjectManagerL
         ActionButton settingsButton = new ActionButton(settingsAction, settingsAction.getTemplatePresentation(), "Settings", ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE);
 
 
-
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
         buttonPanel.add(refreshButton);
         buttonPanel.add(settingsButton);
@@ -92,6 +88,13 @@ public final class CodeStatsWindow implements ToolWindowFactory, ProjectManagerL
         var content = contentFactory.createContent(mainPanel, "CodeStats", true);
         toolWindow.getContentManager().addContent(content);
     }
+
+    @Override
+    public void projectOpened(Project project) {
+        CodeStatsWindow.parser = new Parser(project.getBasePath());
+        CodeStatsWindow.project = project;
+    }
+
 
     @Override
     public void toolWindowShown(@NotNull ToolWindow toolWindow) {

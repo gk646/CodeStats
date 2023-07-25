@@ -25,10 +25,12 @@
 package com.gk646.codestats.settings;
 
 import com.gk646.codestats.CodeStatsWindow;
+import com.gk646.codestats.ui.UIHelper;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.options.Configurable;
+import com.intellij.openapi.ui.ComboBox;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.JBScrollPane;
@@ -40,7 +42,6 @@ import javax.swing.DefaultListModel;
 import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
-import javax.swing.JList;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import java.awt.BorderLayout;
@@ -54,10 +55,11 @@ public final class Settings implements Configurable {
     private static final JBTextField excludedFileTypesField = new JBTextField(10);
     private static final JBTextField includedFileTypesField = new JBTextField(10);
     private static final JBTextField separateTabsField = new JBTextField(10);
-    private static final JBCheckBox exclude_npm = new JBCheckBox("Exclude compiler output dir (out)");
+    private static final JBCheckBox exclude_npm = new JBCheckBox("Exclude compiler output dir (out|target|build|cmake)");
     private static final JBCheckBox exclude_compiler = new JBCheckBox("Exclude npm dir (node_modules)");
-    private static final JBCheckBox exclude_git = new JBCheckBox("Exclude Git directory (.git)");
+    private static final JBCheckBox exclude_git = new JBCheckBox("Exclude VCS directories (.git|.svn|.hg)");
     private static final JBCheckBox disableAutomaticUpdate = new JBCheckBox("Disable automatic update when opening CodeStats");
+    private static final ComboBox<String> charsetMenu = UIHelper.getCharsetMenu();
 
     private DefaultListModel<String> excludedDirectoriesField;
 
@@ -90,7 +92,7 @@ public final class Settings implements Configurable {
 
         constraints.weightx = 0;
         constraints.gridx = 2;
-        panel.add(new JLabel("(Example: txt;mp3"), constraints);
+        panel.add(new JLabel("(Example: ogg;mp3"), constraints);
 
         //included files types
         constraints.gridy++;
@@ -98,7 +100,7 @@ public final class Settings implements Configurable {
         panel.add(new JLabel("White-listed File Types:"), constraints);
 
         constraints.gridx = 1;
-        constraints.weightx = 1;
+        constraints.weightx = 0.6;
         panel.add(includedFileTypesField, constraints);
 
         constraints.gridx = 2;
@@ -111,7 +113,7 @@ public final class Settings implements Configurable {
         panel.add(new JLabel("Separate Tabs Types:"), constraints);
 
         constraints.gridx = 1;
-        constraints.weightx = 1;
+        constraints.weightx = 0.6;
         panel.add(separateTabsField, constraints);
 
         constraints.gridx = 2;
@@ -120,20 +122,20 @@ public final class Settings implements Configurable {
 
 
         excludedDirectoriesField = new DefaultListModel<>();
-
-        JList<String> list = new JBList<>(excludedDirectoriesField);
+        var list = new JBList<>(excludedDirectoriesField);
 
         JScrollPane scrollPane = new JBScrollPane(list);
-        scrollPane.setPreferredSize(new Dimension(120, 120));
+        scrollPane.setPreferredSize(new Dimension(50, 120));
 
+        //add button
         JButton addButton = new JButton("Add...");
         addButton.addActionListener(e -> {
             FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor();
             FileChooser.chooseFile(descriptor, CodeStatsWindow.project, null, file -> excludedDirectoriesField.addElement(file.getPath()));
         });
 
-
-        JButton removeButton = new JButton("Remove");
+        //remove button
+        var removeButton = new JButton("Remove");
         removeButton.setEnabled(false);
         removeButton.addActionListener(e -> {
             int selectedIndex = list.getSelectedIndex();
@@ -145,8 +147,6 @@ public final class Settings implements Configurable {
 
         list.addListSelectionListener(e -> removeButton.setEnabled(list.getSelectedIndex() != -1));
 
-
-        // Add the components to the panel
         constraints.gridx = 0;
         constraints.gridy++;
         panel.add(new JLabel("Excluded Directories:"), constraints);
@@ -165,9 +165,9 @@ public final class Settings implements Configurable {
         panel.add(removeButton, constraints);
 
 
+        //checkboxes
         constraints.gridx = 1;
         constraints.gridy++;
-        //checkboxes
 
         constraints.gridy++;
         panel.add(disableAutomaticUpdate, constraints);
@@ -184,6 +184,18 @@ public final class Settings implements Configurable {
         constraints.gridy++;
         panel.add(exclude_git, constraints);
 
+
+        //charset menu
+        constraints.gridy += 2;
+        constraints.gridx = 0;
+        constraints.weightx = 0;
+        panel.add(new JLabel("Charset:"), constraints);
+
+        constraints.gridx = 1;
+        panel.add(charsetMenu, constraints);
+
+
+        constraints.gridy += 2;
 
         JPanel wrapperPanel = new JPanel(new BorderLayout());
         wrapperPanel.add(panel, BorderLayout.NORTH);
@@ -202,6 +214,7 @@ public final class Settings implements Configurable {
                 || exclude_compiler.isSelected() != settings.exclude_compiler
                 || exclude_git.isSelected() != settings.exclude_git
                 || disableAutomaticUpdate.isSelected() != settings.disableAutoUpdate
+                || !charsetMenu.getItemAt(charsetMenu.getSelectedIndex()).equals(settings.charSet)
                 || !Collections.list(excludedDirectoriesField.elements()).equals(settings.excludedDirectories);
     }
 
@@ -222,6 +235,8 @@ public final class Settings implements Configurable {
         for (String dir : settings.excludedDirectories) {
             excludedDirectoriesField.addElement(dir);
         }
+
+        charsetMenu.setSelectedItem(settings.charSet);
         excludedFileTypesField.setText(settings.excludedFileTypes);
         includedFileTypesField.setText(settings.includedFileTypes);
         separateTabsField.setText(settings.separateTabsTypes);
@@ -239,6 +254,7 @@ public final class Settings implements Configurable {
         settings.exclude_compiler = exclude_compiler.isSelected();
         settings.exclude_git = exclude_git.isSelected();
         settings.disableAutoUpdate = disableAutomaticUpdate.isSelected();
+        settings.charSet = charsetMenu.getItemAt(charsetMenu.getSelectedIndex());
         CodeStatsWindow.parser.updateState();
     }
 }

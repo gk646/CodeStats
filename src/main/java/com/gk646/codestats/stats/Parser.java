@@ -50,6 +50,8 @@ import java.awt.GridBagLayout;
 import java.io.File;
 import java.io.IOException;
 import java.io.UncheckedIOException;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -71,6 +73,7 @@ public final class Parser {
     final HashMap<String, OverViewEntry> overView = new HashMap<>(10);
     final HashMap<String, ArrayList<StatEntry>> tabs = new HashMap<>(6);
     final Path projectPath;
+    Charset charset = StandardCharsets.UTF_8;
 
     public Parser(String path) {
         this.projectPath = Path.of(path);
@@ -82,6 +85,7 @@ public final class Parser {
         overView.clear();
         separateTabs.clear();
         excludedTypes.clear();
+        excludedDirs.clear();
         whiteListTypes.clear();
 
         Collections.addAll(excludedTypes, save.excludedFileTypes.split(";"));
@@ -91,7 +95,8 @@ public final class Parser {
             Collections.addAll(whiteListTypes, save.includedFileTypes.split(";"));
         }
 
-        for (var dir : save.excludedDirectories) {
+        for(var dir : save.excludedDirectories){
+            //to always get correct file separators
             excludedDirs.add(Path.of(dir).toString());
         }
 
@@ -101,14 +106,21 @@ public final class Parser {
         if (save.exclude_npm) {
             excludedDirs.add(projectPath + File.separator + "node_modules");
         }
+
         if (save.exclude_compiler) {
             excludedDirs.add(projectPath + File.separator + "out");
+            excludedDirs.add(projectPath + File.separator + "build");
+            excludedDirs.add(projectPath + File.separator + "target");
             excludedDirs.add(projectPath + File.separator + "cmake-build-debug");
             excludedDirs.add(projectPath + File.separator + "cmake-build-release");
         }
         if (save.exclude_git) {
             excludedDirs.add(projectPath + File.separator + ".git");
+            excludedDirs.add(projectPath + File.separator + ".svn");
+            excludedDirs.add(projectPath + File.separator + ".hg");
         }
+
+        charset = ParsingUtil.getCharsetFallback(save.charSet, StandardCharsets.UTF_8);
     }
 
     public void updatePane() {
@@ -272,7 +284,7 @@ public final class Parser {
             var bool = new BoolContainer();
             try {
                 size = Files.size(path);
-                try (Stream<String> linesStream = Files.newBufferedReader(path).lines()) {
+                try (Stream<String> linesStream = Files.newBufferedReader(path, charset).lines()) {
                     linesStream.forEach(line -> {
                         line = line.trim();
                         if (line.isEmpty()) {
@@ -315,7 +327,7 @@ public final class Parser {
             }
 
             //setting separate tab entry data
-            entry.sourceCodeLines = entry.totalLines - entry.blankLines - entry.commentLines;
+            entry.sourceCodeLines = entry.totalLines - entry.blankLines - entry.commentLines - entry.docLines;
 
             //setting over view entry data
             overView.get(extension).setValues(size, entry.totalLines, entry.sourceCodeLines);

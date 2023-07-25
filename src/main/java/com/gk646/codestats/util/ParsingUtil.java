@@ -26,6 +26,8 @@ package com.gk646.codestats.util;
 
 import java.io.BufferedInputStream;
 import java.io.IOException;
+import java.nio.charset.Charset;
+import java.nio.charset.UnsupportedCharsetException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
@@ -64,5 +66,11 @@ public final class ParsingUtil {
         }
         return lines;
     }
-
+    public static Charset getCharsetFallback(String charsetName, Charset fallbackCharset) {
+        try {
+            return Charset.forName(charsetName);
+        } catch (UnsupportedCharsetException e) {
+            return fallbackCharset;
+        }
+    }
 }

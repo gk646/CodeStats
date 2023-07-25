@@ -25,11 +25,14 @@
 package com.gk646.codestats.ui;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.openapi.ui.ComboBox;
 import com.intellij.ui.JBColor;
 
 import javax.swing.BorderFactory;
+import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
+import javax.swing.JList;
 import javax.swing.JTable;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableCellRenderer;
@@ -38,6 +41,7 @@ import javax.swing.table.TableRowSorter;
 import java.awt.Component;
 import java.awt.Font;
 import java.awt.GridBagConstraints;
+import java.nio.charset.StandardCharsets;
 import java.util.Comparator;
 
 public final class UIHelper {
@@ -138,4 +142,17 @@ public final class UIHelper {
         gbc.fill = GridBagConstraints.HORIZONTAL;
         return gbc;
     }
+
+    public static ComboBox<String> getCharsetMenu() {
+        var comboBox = new ComboBox<String>();
+        comboBox.addItem(String.valueOf(StandardCharsets.UTF_8));
+        comboBox.addItem(String.valueOf(StandardCharsets.US_ASCII));
+        comboBox.addItem(String.valueOf(StandardCharsets.UTF_16));
+        comboBox.addItem(String.valueOf(StandardCharsets.ISO_8859_1));
+        comboBox.addItem(String.valueOf(StandardCharsets.UTF_16BE));
+
+        return comboBox;
+    }
+
+
 }
