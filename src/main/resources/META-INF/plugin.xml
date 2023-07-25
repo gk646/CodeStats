@@ -46,6 +46,15 @@
 ]]></description>
 
     <change-notes><![CDATA[
+     <h2>Release 1.2.0</h2>
+      <ul>
+        <li>Added charset (UTF-8,...) selector in settings</li>
+        <li>Fixed bug that prevented changing settings before opening the tool window once</li>
+        <li>Fixed bug where excluded dir settings didn't reset correctly</li>
+        <li>Source code lines do not include documentation lines anymore</li>
+        <li>Added more settings to exclude common non-source directories</li>
+      </ul>
+
       <h2>Release 1.1.0</h2>
       <ul>
         <li>Improved general performance</li>
