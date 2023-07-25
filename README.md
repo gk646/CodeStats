@@ -37,9 +37,10 @@ If the files type is not excluded it gets parsed depending on whether its type i
 
 #### Non-Source Files
 
-**Filetypes not included in the separate tab setting are considered binary data and as such non-text and non-source files.**
+**Filetypes not included in the separate tab setting are considered binary data and as such non-text and non-source files.**  
 Such files get parsed based on their size to avoid a `OutOfMemoryException`. Files with more than 50mb are read in chunks with a `BufferedInputStream`, smaller files are read with `Files.readAllBytes` in one go. In both cases every byte is checked to be equal to 10 as it's the ASCII code for the line feed character `\n`. This should still give some information about these files in a general way even if the concept of lines does not apply to binary formats.
 
 #### Source Files
 
-**All types included in the separate tab settings are initially handled as source files in UTF-8 encoding.** Should there be an error converting them with this encoding the non-source file parsing is still applied as mentioned above.
+**All types included in the separate tab settings are initially handled as source files in the chosen encoding (default UTF-8).**  
+Should there be an error converting them with this encoding the non-source file parsing is still applied as mentioned above.
