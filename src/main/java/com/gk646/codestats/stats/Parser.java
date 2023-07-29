@@ -66,25 +66,24 @@ import java.util.stream.Stream;
 
 @SuppressWarnings("DialogTitleCapitalization")
 public final class Parser {
-    public  Path projectPath;
     final HashSet<String> excludedTypes = new HashSet<>(16, 1);
     final HashSet<String> excludedDirs = new HashSet<>(16, 1);
     final HashSet<String> separateTabs = new HashSet<>(16, 1);
     final HashSet<String> whiteListTypes = new HashSet<>(16, 1);
     final HashMap<String, OverViewEntry> overView = new HashMap<>(10);
     final HashMap<String, ArrayList<StatEntry>> tabs = new HashMap<>(6);
+    public Path projectPath;
     Charset charset = StandardCharsets.UTF_8;
 
     public Parser() {
-        updateState();
+
     }
 
     public void updateState() {
         var save = Save.getInstance();
-        overView.clear();
-        separateTabs.clear();
         excludedTypes.clear();
         excludedDirs.clear();
+        separateTabs.clear();
         whiteListTypes.clear();
 
         Collections.addAll(excludedTypes, save.excludedFileTypes.split(";"));
@@ -99,6 +98,7 @@ public final class Parser {
             excludedDirs.add(Path.of(dir).toString());
         }
 
+        //checkbox options
         if (save.exclude_idea) {
             excludedDirs.add(projectPath + File.separator + ".idea");
         }
@@ -128,6 +128,9 @@ public final class Parser {
             public void run(@NotNull ProgressIndicator indicator) {
                 var time = System.currentTimeMillis();
                 resetCache();
+                for (var dir : excludedDirs) {
+                    System.out.println(dir);
+                }
                 iterateFiles();
                 ApplicationManager.getApplication().invokeLater(() -> {
                     rebuildTabbedPane();
@@ -277,7 +280,6 @@ public final class Parser {
         overView.computeIfAbsent(extension, k -> new OverViewEntry());
 
         if (separateTabs.contains(extension)) {
-            //getting correct entry
             var entry = new StatEntry(path.getFileName().toString());
             long size = 0;
             var bool = new BoolContainer();
@@ -346,7 +348,6 @@ public final class Parser {
             } catch (IOException ignored) {
             }
 
-
             //setting overview entry data
             overView.get(extension).setValues(size, lines, 0);
         }
@@ -356,8 +357,10 @@ public final class Parser {
         try {
             Files.walkFileTree(projectPath, new SimpleFileVisitor<>() {
                 @Override
-                public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) {
-                    if (excludedDirs.contains(dir.toString())) {
+                public FileVisitResult preVisitDirectory(Path path, BasicFileAttributes attrs) {
+                    if (excludedDirs.contains(path.toString())) {
+                        System.out.println("excluded");
+                        System.out.println(path);
                         return FileVisitResult.SKIP_SUBTREE;
                     }
                     return FileVisitResult.CONTINUE;
@@ -384,9 +387,8 @@ public final class Parser {
     private void resetCache() {
         overView.clear();
         tabs.clear();
-
-        for (final var tab : separateTabs) {
-            tabs.put(tab, new ArrayList<>(16));
+        for (var tab : separateTabs) {
+            tabs.put(tab, new ArrayList<>());
         }
     }
 }
