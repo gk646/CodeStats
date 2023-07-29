@@ -57,6 +57,7 @@ public final class CodeStatsWindow implements ToolWindowFactory, ToolWindowManag
     public void createToolWindowContent(@NotNull Project project, @NotNull com.intellij.openapi.wm.ToolWindow toolWindow) {
         parser.projectPath = Path.of(project.getBasePath());
         CodeStatsWindow.project = project;
+        parser.updateState();
         //refresh button
         AnAction refreshAction = new AnAction("Refresh", "Get CodeStats!", AllIcons.Actions.Refresh) {
             @Override

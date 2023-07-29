@@ -2,7 +2,7 @@
 <idea-plugin>
     <!-- Unique identifier of the plugin. It should be FQN. It cannot be changed between the plugin versions. -->
     <id>com.gk646.codeStats</id>
-    <version>1.2.0</version>
+    <version>1.3.0</version>
     <!-- Public plugin name should be written in Title Case.
          Guidelines: https://plugins.jetbrains.com/docs/marketplace/plugin-overview-page.html#plugin-name -->
     <name>CodeStats</name>
@@ -44,10 +44,16 @@
         If you encounter any issues or want to contribute, please feel free to visit the CodeStats <a href="https://github.com/gk646/CodeStats">GitHub page.</a>
     </p>
 ]]></description>
-
     <change-notes><![CDATA[
+    <h2>Release 1.3.0</h2>
+      <ul>
+        <li>Fixed bug where excluded directories are not loaded correctly</li>
+        <li>Changed icon colors for better visibility</li>
+      </ul>
+
      <h2>Release 1.2.0</h2>
       <ul>
+       <li>Added support for python comment lines</li>
         <li>Added charset (UTF-8,...) selector in settings</li>
         <li>Fixed bug that prevented changing settings before opening the tool window once</li>
         <li>Fixed bug where excluded dir settings didn't reset correctly</li>
