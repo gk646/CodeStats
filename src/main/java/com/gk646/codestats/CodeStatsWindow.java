@@ -27,10 +27,8 @@ package com.gk646.codestats;
 import com.gk646.codestats.settings.Save;
 import com.gk646.codestats.settings.Settings;
 import com.gk646.codestats.stats.Parser;
+import com.gk646.codestats.ui.UIHelper;
 import com.intellij.icons.AllIcons;
-import com.intellij.openapi.actionSystem.ActionToolbar;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
@@ -46,62 +44,48 @@ import javax.swing.JTabbedPane;
 import java.awt.BorderLayout;
 import java.awt.FlowLayout;
 import java.nio.file.Path;
+import java.util.Objects;
 
-@SuppressWarnings("DialogTitleCapitalization")
 public final class CodeStatsWindow implements ToolWindowFactory, ToolWindowManagerListener {
-    public static final JTabbedPane tabbedPane = new JBTabbedPane();
-    public static Parser parser = new Parser();
+    public static final JTabbedPane TABBED_PANE = new JBTabbedPane();
+    public static final Parser PARSER = new Parser();
     public static Project project;
 
     @Override
-    public void createToolWindowContent(@NotNull Project project, @NotNull com.intellij.openapi.wm.ToolWindow toolWindow) {
-        parser.projectPath = Path.of(project.getBasePath());
+    public void createToolWindowContent(@NotNull Project project, @NotNull ToolWindow toolWindow) {
+        PARSER.projectPath = Path.of(Objects.requireNonNull(project.getBasePath()));
         CodeStatsWindow.project = project;
-        parser.updateState();
-        //refresh button
-        AnAction refreshAction = new AnAction("Refresh", "Get CodeStats!", AllIcons.Actions.Refresh) {
-            @Override
-            public void actionPerformed(@NotNull AnActionEvent e) {
-                CodeStatsWindow.this.update();
-            }
-        };
-        ActionButton refreshButton = new ActionButton(refreshAction, refreshAction.getTemplatePresentation(), "Refresh", ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE);
+        PARSER.updateState();
+        initUI(toolWindow, project);
+    }
 
-        //settings button
-        AnAction settingsAction = new AnAction("Settings", "Customize CodeStats!", AllIcons.General.GearPlain) {
-            @Override
-            public void actionPerformed(@NotNull AnActionEvent e) {
-                ShowSettingsUtil.getInstance().showSettingsDialog(project, Settings.class);
-            }
-        };
-        ActionButton settingsButton = new ActionButton(settingsAction, settingsAction.getTemplatePresentation(), "Settings", ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE);
-
+    private void initUI(ToolWindow toolWindow, Project project) {
+        ActionButton refreshButton = UIHelper.createButton("Refresh", "Get CodeStats!", AllIcons.Actions.Refresh, this::update);
+        ActionButton settingsButton = UIHelper.createButton("Settings", "Customize CodeStats!", AllIcons.General.GearPlain,
+                () -> ShowSettingsUtil.getInstance().showSettingsDialog(project, Settings.class));
 
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
         buttonPanel.add(refreshButton);
         buttonPanel.add(settingsButton);
 
-
-        var mainPanel = new JPanel(new BorderLayout());
-
+        JPanel mainPanel = new JPanel(new BorderLayout());
         mainPanel.add(buttonPanel, BorderLayout.NORTH);
-        mainPanel.add(tabbedPane, BorderLayout.CENTER);
+        mainPanel.add(TABBED_PANE, BorderLayout.CENTER);
 
-        var contentFactory = ContentFactory.getInstance();
-        var content = contentFactory.createContent(mainPanel, "CodeStats", true);
+        var content = ContentFactory.getInstance().createContent(mainPanel, "CodeStats", true);
         toolWindow.getContentManager().addContent(content);
     }
 
 
     @Override
     public void toolWindowShown(@NotNull ToolWindow toolWindow) {
-        if (toolWindow.getId().equals("CodeStats") && !Save.getInstance().disableAutoUpdate) {
+        if ("CodeStats".equals(toolWindow.getId()) && !Save.getInstance().disableAutoUpdate) {
             update();
         }
     }
 
     public void update() {
-        tabbedPane.removeAll();
-        parser.updatePane();
+        TABBED_PANE.removeAll();
+        PARSER.updatePane();
     }
 }

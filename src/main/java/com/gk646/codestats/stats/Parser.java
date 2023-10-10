@@ -99,22 +99,23 @@ public final class Parser {
         }
 
         //checkbox options
-        if (save.exclude_idea) {
+        if (save.excludeIdea) {
             excludedDirs.add(projectPath + File.separator + ".idea");
         }
-        if (save.exclude_npm) {
+        if (save.excludeNpm) {
             excludedDirs.add(projectPath + File.separator + "node_modules");
         }
 
-        if (save.exclude_compiler) {
+        if (save.excludeCompiler) {
             excludedDirs.add(projectPath + File.separator + "out");
             excludedDirs.add(projectPath + File.separator + "build");
             excludedDirs.add(projectPath + File.separator + "target");
             excludedDirs.add(projectPath + File.separator + "cmake-build-debug");
             excludedDirs.add(projectPath + File.separator + "cmake-build-release");
         }
-        if (save.exclude_git) {
+        if (save.excludeGit) {
             excludedDirs.add(projectPath + File.separator + ".git");
+            excludedDirs.add(projectPath + File.separator + ".gitignore");
             excludedDirs.add(projectPath + File.separator + ".svn");
             excludedDirs.add(projectPath + File.separator + ".hg");
         }
@@ -128,9 +129,6 @@ public final class Parser {
             public void run(@NotNull ProgressIndicator indicator) {
                 var time = System.currentTimeMillis();
                 resetCache();
-                for (var dir : excludedDirs) {
-                    System.out.println(dir);
-                }
                 iterateFiles();
                 ApplicationManager.getApplication().invokeLater(() -> {
                     rebuildTabbedPane();
@@ -210,7 +208,7 @@ public final class Parser {
 
         // Add footer table
         panel.add(footer, UIHelper.setFooterTableConstraint(gbc));
-        CodeStatsWindow.tabbedPane.addTab("OverView", AllIcons.Nodes.HomeFolder, panel);
+        CodeStatsWindow.TABBED_PANE.addTab("OverView", AllIcons.Nodes.HomeFolder, panel);
 
         //build tabs
         for (var pair : tabs.entrySet()) {
@@ -272,7 +270,7 @@ public final class Parser {
 
             //Add footer table
             panel.add(footer, UIHelper.setFooterTableConstraint(gbc));
-            CodeStatsWindow.tabbedPane.addTab(pair.getKey(), AllIcons.General.ArrowSplitCenterH, panel);
+            CodeStatsWindow.TABBED_PANE.addTab(pair.getKey(), AllIcons.General.ArrowSplitCenterH, panel);
         }
     }
 
@@ -282,36 +280,38 @@ public final class Parser {
         if (separateTabs.contains(extension)) {
             var entry = new StatEntry(path.getFileName().toString());
             long size = 0;
-            var bool = new BoolContainer();
+            var bool = new BoolContainer(); // first = multiline comment / second = multiline doc
             try {
                 size = Files.size(path);
                 try (Stream<String> linesStream = Files.newBufferedReader(path, charset).lines()) {
                     linesStream.forEach(line -> {
                         line = line.trim();
-                        if (line.isEmpty()) {
-                            entry.blankLines++;
-                        } else if (line.startsWith("//") || line.startsWith("#")) {
-                            entry.commentLines++;
-                        } else if (line.startsWith("/*")) {
-                            bool.first = true;
-                            entry.commentLines++;
-                            if (line.startsWith("/**")) {
-                                bool.second = true;
-                                bool.first = false;
-                                entry.commentLines--;
-                                entry.docLines++;
-                            }
-                        } else if (bool.first || bool.second) {
+                        if (bool.first || bool.second) {
                             if (bool.second && line.startsWith("*")) {
                                 entry.docLines++;
+                            }
+                            if (bool.first) {
+                                entry.commentLines++;
                             }
                             if (line.contains("*/")) {
                                 bool.first = false;
                                 bool.second = false;
                             }
-                        }
-                        if (bool.first) {
-                            entry.commentLines++;
+                        } else {
+                            if (line.isEmpty()) {
+                                entry.blankLines++;
+                            } else if (line.startsWith("//") || line.startsWith("#")) {
+                                entry.commentLines++;
+                            } else if (line.startsWith("/*")) {
+                                bool.first = true;
+                                entry.commentLines++;
+                                if (line.startsWith("/**")) {
+                                    bool.second = true;
+                                    bool.first = false;
+                                    entry.commentLines--;
+                                    entry.docLines++;
+                                }
+                            }
                         }
                         entry.totalLines++;
                     });
@@ -359,8 +359,6 @@ public final class Parser {
                 @Override
                 public FileVisitResult preVisitDirectory(Path path, BasicFileAttributes attrs) {
                     if (excludedDirs.contains(path.toString())) {
-                        System.out.println("excluded");
-                        System.out.println(path);
                         return FileVisitResult.SKIP_SUBTREE;
                     }
                     return FileVisitResult.CONTINUE;

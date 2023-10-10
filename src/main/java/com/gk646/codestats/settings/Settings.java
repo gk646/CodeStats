@@ -209,10 +209,10 @@ public final class Settings implements Configurable {
         return !excludedFileTypesField.getText().equals(settings.excludedFileTypes)
                 || !includedFileTypesField.getText().equals(settings.includedFileTypes)
                 || !separateTabsField.getText().equals(settings.separateTabsTypes)
-                || exclude_idea.isSelected() != settings.exclude_idea
-                || exclude_npm.isSelected() != settings.exclude_npm
-                || exclude_compiler.isSelected() != settings.exclude_compiler
-                || exclude_git.isSelected() != settings.exclude_git
+                || exclude_idea.isSelected() != settings.excludeIdea
+                || exclude_npm.isSelected() != settings.excludeNpm
+                || exclude_compiler.isSelected() != settings.excludeCompiler
+                || exclude_git.isSelected() != settings.excludeGit
                 || disableAutomaticUpdate.isSelected() != settings.disableAutoUpdate
                 || !charsetMenu.getItemAt(charsetMenu.getSelectedIndex()).equals(settings.charSet)
                 || !Collections.list(excludedDirectoriesField.elements()).equals(settings.excludedDirectories);
@@ -225,10 +225,10 @@ public final class Settings implements Configurable {
         excludedFileTypesField.setText(settings.excludedFileTypes);
         includedFileTypesField.setText(settings.includedFileTypes);
         separateTabsField.setText(settings.separateTabsTypes);
-        exclude_idea.setSelected(settings.exclude_idea);
-        exclude_npm.setSelected(settings.exclude_npm);
-        exclude_compiler.setSelected(settings.exclude_compiler);
-        exclude_git.setSelected(settings.exclude_git);
+        exclude_idea.setSelected(settings.excludeIdea);
+        exclude_npm.setSelected(settings.excludeNpm);
+        exclude_compiler.setSelected(settings.excludeCompiler);
+        exclude_git.setSelected(settings.excludeGit);
         disableAutomaticUpdate.setSelected(settings.disableAutoUpdate);
 
         excludedDirectoriesField.clear();
@@ -249,12 +249,12 @@ public final class Settings implements Configurable {
         settings.excludedFileTypes = excludedFileTypesField.getText();
         settings.includedFileTypes = includedFileTypesField.getText();
         settings.separateTabsTypes = separateTabsField.getText();
-        settings.exclude_idea = exclude_idea.isSelected();
-        settings.exclude_npm = exclude_npm.isSelected();
-        settings.exclude_compiler = exclude_compiler.isSelected();
-        settings.exclude_git = exclude_git.isSelected();
+        settings.excludeIdea = exclude_idea.isSelected();
+        settings.excludeNpm = exclude_npm.isSelected();
+        settings.excludeCompiler = exclude_compiler.isSelected();
+        settings.excludeGit = exclude_git.isSelected();
         settings.disableAutoUpdate = disableAutomaticUpdate.isSelected();
         settings.charSet = charsetMenu.getItemAt(charsetMenu.getSelectedIndex());
-        CodeStatsWindow.parser.updateState();
+        CodeStatsWindow.PARSER.updateState();
     }
 }

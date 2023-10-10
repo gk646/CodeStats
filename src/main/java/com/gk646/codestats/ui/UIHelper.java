@@ -25,14 +25,18 @@
 package com.gk646.codestats.ui;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.openapi.actionSystem.ActionToolbar;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.ui.JBColor;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.BorderFactory;
-import javax.swing.JButton;
+import javax.swing.Icon;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
-import javax.swing.JList;
 import javax.swing.JTable;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableCellRenderer;
@@ -153,6 +157,14 @@ public final class UIHelper {
 
         return comboBox;
     }
-
+    public static ActionButton createButton(String text, String description, @NotNull Icon icon, Runnable action) {
+        var anAction = new AnAction(text, description, icon) {
+            @Override
+            public void actionPerformed(@NotNull AnActionEvent e) {
+                action.run();
+            }
+        };
+        return new ActionButton(anAction, anAction.getTemplatePresentation(), text, ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE);
+    }
 
 }

@@ -24,10 +24,11 @@
 
 package com.gk646.codestats.settings;
 
-import com.intellij.openapi.application.ApplicationManager;
+import com.gk646.codestats.CodeStatsWindow;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import com.intellij.util.xmlb.annotations.XCollection;
 import org.jetbrains.annotations.NotNull;
@@ -38,25 +39,24 @@ import java.util.List;
 
 @State(
         name = "com.gk646.codestats.settings.Save",
-        storages = {@Storage("CodeStatsSettings.xml")}
+        storages = {@Storage(StoragePathMacros.WORKSPACE_FILE)}
 )
 public final class Save implements PersistentStateComponent<Save> {
-    private static final String USER_HOME = System.getenv("$USER_HOME");
     public String excludedFileTypes = "wav;ttf;sql;tmp;dmp;ico;dat;svg;class;svn-base;svn-work;Extra;gif;png;jpg;mp3;jpeg;bmp;tga;tiff;ear;war;zip;jar;iml;iws;ipr;bz2;gz;pyc;rar";
     public String includedFileTypes = "";
     public String separateTabsTypes = "java;cpp;c;hpp;h;rs;css;html;js;php;py;cs;go;rb;swift;ts;kt;sql;pl;lua;groovy;asp;aspx;jsp;json;scss;less;sass;sh;bat;ps1;md;f;r;m;asm;ada;scala;dart;jsx;julia";
     public String charSet = StandardCharsets.UTF_8.toString();
-    public boolean exclude_idea = true;
-    public boolean exclude_npm = true;
-    public boolean exclude_compiler = true;
-    public boolean exclude_git = true;
+    public boolean excludeIdea = true;
+    public boolean excludeNpm = true;
+    public boolean excludeCompiler = true;
+    public boolean excludeGit = true;
     public boolean disableAutoUpdate = false;
     @XCollection(propertyElementName = "excludedDirs", elementTypes = String.class)
 
     public List<String> excludedDirectories = new ArrayList<>();
 
     public static Save getInstance() {
-        return ApplicationManager.getApplication().getService(Save.class);
+        return CodeStatsWindow.project.getService(Save.class);
     }
 
     @Override
