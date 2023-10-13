@@ -1,6 +1,7 @@
 ## Code Stats
 
-## Downloaded the addon from the official [JetBrains Plugin Website](https://plugins.jetbrains.com/plugin/22328-codestats)
+### Download the addon from the official [JetBrains Plugin Website](https://plugins.jetbrains.com/plugin/22328-codestats)
+
 CodeStats is an opensource statistics plugin for JetBrains IDE's with focus on a modern look and feel, performance and a good feature set.
 
 
