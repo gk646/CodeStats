@@ -66,9 +66,8 @@ public final class Settings implements Configurable {
     @Nls(capitalization = Nls.Capitalization.Title)
     @Override
     public String getDisplayName() {
-        return "Code Stats";
+        return "CodeStats";
     }
-
 
     @Override
     public JComponent createComponent() {

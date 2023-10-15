@@ -47,7 +47,7 @@
     <change-notes><![CDATA[
      <h2>Release 1.4.0</h2>
       <ul>
-        <li>Plugin settings are not project specific</li>
+        <li>Plugin settings are now project specific</li>
         <li>Removed left over debug print-Statements (Ups!)</li>
         <li>Added more file types to the basic exclusion option (.gitignore)</li>
         <li>Improved parsing for comment and documentation lines</li>
@@ -93,6 +93,7 @@
                                  instance="com.gk646.codestats.settings.Settings"/>
         <projectService serviceImplementation="com.gk646.codestats.settings.Save"/>
         <notificationGroup displayType="BALLOON" id="CodeStats" isLogByDefault="false"/>
+        <postStartupActivity implementation="com.gk646.codestats.CodeStatsWindow"/>
     </extensions>
 
     <projectListeners>

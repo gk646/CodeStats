@@ -26,6 +26,7 @@ package com.gk646.codestats.stats;
 
 import com.gk646.codestats.CodeStatsWindow;
 import com.gk646.codestats.settings.Save;
+import com.gk646.codestats.ui.LineChartPanel;
 import com.gk646.codestats.ui.UIHelper;
 import com.gk646.codestats.util.BoolContainer;
 import com.gk646.codestats.util.ParsingUtil;
@@ -133,7 +134,7 @@ public final class Parser {
                 ApplicationManager.getApplication().invokeLater(() -> {
                     rebuildTabbedPane();
                     var duration = System.currentTimeMillis() - time;
-                    var notification = new Notification("CodeStats", "Code Stats", "Update completed in " + String.format("%.4f", duration / 1_000f) + " sec.", NotificationType.INFORMATION);
+                    var notification = new Notification("CodeStats", "Code Stats", "Update completed in " + String.format("%d", duration) + " ms.", NotificationType.INFORMATION);
                     notification.setIcon(AllIcons.General.Information);
                     Notifications.Bus.notify(notification);
                 });
@@ -210,6 +211,9 @@ public final class Parser {
         panel.add(footer, UIHelper.setFooterTableConstraint(gbc));
         CodeStatsWindow.TABBED_PANE.addTab("OverView", AllIcons.Nodes.HomeFolder, panel);
 
+        //Adds the new timeline tab as the second tab
+        addTimeLineTab();
+
         //build tabs
         for (var pair : tabs.entrySet()) {
             var fileList = pair.getValue();
@@ -272,6 +276,11 @@ public final class Parser {
             panel.add(footer, UIHelper.setFooterTableConstraint(gbc));
             CodeStatsWindow.TABBED_PANE.addTab(pair.getKey(), AllIcons.General.ArrowSplitCenterH, panel);
         }
+    }
+
+    private void addTimeLineTab() {
+        LineChartPanel chartPanel = new LineChartPanel();
+        CodeStatsWindow.TABBED_PANE.addTab("TimeLine", AllIcons.Nodes.PpLib, chartPanel);
     }
 
     private void parseFile(Path path, String extension) {
