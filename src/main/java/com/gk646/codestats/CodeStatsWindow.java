@@ -31,7 +31,9 @@ import com.gk646.codestats.ui.UIHelper;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.options.ShowSettingsUtil;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowFactory;
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener;
@@ -46,11 +48,15 @@ import java.awt.FlowLayout;
 import java.nio.file.Path;
 import java.util.Objects;
 
-public final class CodeStatsWindow implements ToolWindowFactory, ToolWindowManagerListener {
+public final class CodeStatsWindow implements ToolWindowFactory, ToolWindowManagerListener, DumbAware, StartupActivity.DumbAware{
     public static final JTabbedPane TABBED_PANE = new JBTabbedPane();
     public static final Parser PARSER = new Parser();
     public static Project project;
-
+    @Override
+    public void runActivity(@NotNull Project project) {
+        PARSER.projectPath = Path.of(Objects.requireNonNull(project.getBasePath()));
+        CodeStatsWindow.project = project;
+    }
     @Override
     public void createToolWindowContent(@NotNull Project project, @NotNull ToolWindow toolWindow) {
         PARSER.projectPath = Path.of(Objects.requireNonNull(project.getBasePath()));
