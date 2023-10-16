@@ -27,6 +27,7 @@ package com.gk646.codestats;
 import com.gk646.codestats.settings.Save;
 import com.gk646.codestats.settings.Settings;
 import com.gk646.codestats.stats.Parser;
+import com.gk646.codestats.ui.LineChartPanel;
 import com.gk646.codestats.ui.UIHelper;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
@@ -45,18 +46,24 @@ import javax.swing.JPanel;
 import javax.swing.JTabbedPane;
 import java.awt.BorderLayout;
 import java.awt.FlowLayout;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
 import java.nio.file.Path;
 import java.util.Objects;
 
-public final class CodeStatsWindow implements ToolWindowFactory, ToolWindowManagerListener, DumbAware, StartupActivity.DumbAware{
+public final class CodeStatsWindow implements ToolWindowFactory, ToolWindowManagerListener, DumbAware, StartupActivity.DumbAware {
     public static final JTabbedPane TABBED_PANE = new JBTabbedPane();
+    public static final LineChartPanel TIME_LINE = new LineChartPanel(TABBED_PANE);
     public static final Parser PARSER = new Parser();
     public static Project project;
+
     @Override
     public void runActivity(@NotNull Project project) {
+        //Added as safety layer // if ToolWindow isn't opened before the settings there is a null access
         PARSER.projectPath = Path.of(Objects.requireNonNull(project.getBasePath()));
         CodeStatsWindow.project = project;
     }
+
     @Override
     public void createToolWindowContent(@NotNull Project project, @NotNull ToolWindow toolWindow) {
         PARSER.projectPath = Path.of(Objects.requireNonNull(project.getBasePath()));
@@ -78,10 +85,17 @@ public final class CodeStatsWindow implements ToolWindowFactory, ToolWindowManag
         mainPanel.add(buttonPanel, BorderLayout.NORTH);
         mainPanel.add(TABBED_PANE, BorderLayout.CENTER);
 
+        //To react to resize events for the TIME_LINE
+        mainPanel.addComponentListener(new ComponentAdapter() {
+            @Override
+            public void componentResized(ComponentEvent e) {
+                TIME_LINE.resizeTimer.restart();
+            }
+        });
+
         var content = ContentFactory.getInstance().createContent(mainPanel, "CodeStats", true);
         toolWindow.getContentManager().addContent(content);
     }
-
 
     @Override
     public void toolWindowShown(@NotNull ToolWindow toolWindow) {
@@ -90,7 +104,9 @@ public final class CodeStatsWindow implements ToolWindowFactory, ToolWindowManag
         }
     }
 
+
     public void update() {
+        //TODO potentially no need to remove them / just reassign the tables / could get rid of visual reload delay
         TABBED_PANE.removeAll();
         PARSER.updatePane();
     }
