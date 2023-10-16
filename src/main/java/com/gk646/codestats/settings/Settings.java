@@ -217,7 +217,6 @@ public final class Settings implements Configurable {
                 || !Collections.list(excludedDirectoriesField.elements()).equals(settings.excludedDirectories);
     }
 
-
     @Override
     public void reset() {
         Save settings = Save.getInstance();

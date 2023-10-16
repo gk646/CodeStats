@@ -30,6 +30,7 @@ import com.gk646.codestats.ui.LineChartPanel;
 import com.gk646.codestats.ui.UIHelper;
 import com.gk646.codestats.util.BoolContainer;
 import com.gk646.codestats.util.ParsingUtil;
+import com.gk646.codestats.util.TimePoint;
 import com.intellij.icons.AllIcons;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
@@ -58,6 +59,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.time.format.FormatStyle;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -77,7 +81,6 @@ public final class Parser {
     Charset charset = StandardCharsets.UTF_8;
 
     public Parser() {
-
     }
 
     public void updateState() {
@@ -173,6 +176,7 @@ public final class Parser {
             i++;
         }
 
+        Save.AddTimePoint(LineChartPanel.TimePointMode.GENERIC, new TimePoint(System.currentTimeMillis(), (int) footerData[0][10], (int) footerData[0][6], LocalDate.now().format(DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM).withLocale(Locale.getDefault()))));
         String[] columnNames = {"Extension", "Count", "Size SUM", "Size MIN", "Size MAX", "Size AVG", "Lines", "Lines MIN", "Lines MAX", "Lines AVG", "Lines CODE"};
 
         var model = new DefaultTableModel(data, columnNames);
@@ -212,7 +216,7 @@ public final class Parser {
         CodeStatsWindow.TABBED_PANE.addTab("OverView", AllIcons.Nodes.HomeFolder, panel);
 
         //Adds the new timeline tab as the second tab
-        addTimeLineTab();
+        CodeStatsWindow.TABBED_PANE.addTab("TimeLine", AllIcons.Nodes.PpLib, CodeStatsWindow.TIME_LINE);
 
         //build tabs
         for (var pair : tabs.entrySet()) {
@@ -276,11 +280,6 @@ public final class Parser {
             panel.add(footer, UIHelper.setFooterTableConstraint(gbc));
             CodeStatsWindow.TABBED_PANE.addTab(pair.getKey(), AllIcons.General.ArrowSplitCenterH, panel);
         }
-    }
-
-    private void addTimeLineTab() {
-        LineChartPanel chartPanel = new LineChartPanel();
-        CodeStatsWindow.TABBED_PANE.addTab("TimeLine", AllIcons.Nodes.PpLib, chartPanel);
     }
 
     private void parseFile(Path path, String extension) {
