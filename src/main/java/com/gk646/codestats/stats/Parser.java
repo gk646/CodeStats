@@ -55,6 +55,7 @@ import java.io.UncheckedIOException;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.FileVisitResult;
+import java.nio.file.FileVisitor;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.SimpleFileVisitor;
@@ -71,16 +72,39 @@ import java.util.stream.Stream;
 
 @SuppressWarnings("DialogTitleCapitalization")
 public final class Parser {
-    final HashSet<String> excludedTypes = new HashSet<>(16, 1);
-    final HashSet<String> excludedDirs = new HashSet<>(16, 1);
-    final HashSet<String> separateTabs = new HashSet<>(16, 1);
-    final HashSet<String> whiteListTypes = new HashSet<>(16, 1);
-    final HashMap<String, OverViewEntry> overView = new HashMap<>(10);
-    final HashMap<String, ArrayList<StatEntry>> tabs = new HashMap<>(6);
+    private static final HashSet<String> excludedTypes = new HashSet<>(16, 1);
+    private static final HashSet<String> excludedDirs = new HashSet<>(16, 1);
+    private static final HashSet<String> separateTabs = new HashSet<>(16, 1);
+    private static final HashSet<String> whiteListTypes = new HashSet<>(16, 1);
+    private static final HashMap<String, OverViewEntry> overView = new HashMap<>(10);
+    private static final HashMap<String, ArrayList<StatEntry>> tabs = new HashMap<>(6);
+    private final FileVisitor<Path> visitor;
     public Path projectPath;
     Charset charset = StandardCharsets.UTF_8;
 
     public Parser() {
+        visitor = new SimpleFileVisitor<>() {
+            @Override
+            public FileVisitResult preVisitDirectory(Path path, BasicFileAttributes attrs) {
+                if (excludedDirs.contains(path.toString())) {
+                    return FileVisitResult.SKIP_SUBTREE;
+                }
+                return FileVisitResult.CONTINUE;
+            }
+
+            @Override
+            public FileVisitResult visitFile(Path path, BasicFileAttributes attrs) {
+                String extension = ParsingUtil.getFileExtension(path.getFileName().toString());
+                if (whiteListTypes.isEmpty()) {
+                    if (!extension.isEmpty() && !excludedTypes.contains(extension)) {
+                        parseFile(path, extension);
+                    }
+                } else if (whiteListTypes.contains(extension)) {
+                    parseFile(path, extension);
+                }
+                return FileVisitResult.CONTINUE;
+            }
+        };
     }
 
     public void updateState() {
@@ -363,28 +387,7 @@ public final class Parser {
 
     private void iterateFiles() {
         try {
-            Files.walkFileTree(projectPath, new SimpleFileVisitor<>() {
-                @Override
-                public FileVisitResult preVisitDirectory(Path path, BasicFileAttributes attrs) {
-                    if (excludedDirs.contains(path.toString())) {
-                        return FileVisitResult.SKIP_SUBTREE;
-                    }
-                    return FileVisitResult.CONTINUE;
-                }
-
-                @Override
-                public FileVisitResult visitFile(Path path, BasicFileAttributes attrs) {
-                    String extension = ParsingUtil.getFileExtension(path.getFileName().toString());
-                    if (whiteListTypes.isEmpty()) {
-                        if (!extension.isEmpty() && !excludedTypes.contains(extension)) {
-                            parseFile(path, extension);
-                        }
-                    } else if (whiteListTypes.contains(extension)) {
-                        parseFile(path, extension);
-                    }
-                    return FileVisitResult.CONTINUE;
-                }
-            });
+            Files.walkFileTree(projectPath, visitor);
         } catch (IOException e) {
             e.printStackTrace();
         }

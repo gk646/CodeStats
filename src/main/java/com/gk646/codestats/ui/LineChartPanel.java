@@ -35,7 +35,6 @@ import javax.swing.JTabbedPane;
 import javax.swing.Timer;
 import javax.swing.ToolTipManager;
 import java.awt.BasicStroke;
-import java.awt.Color;
 import java.awt.Component;
 import java.awt.Font;
 import java.awt.GradientPaint;
@@ -52,15 +51,14 @@ import java.time.LocalDate;
 import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
-import java.util.stream.Collectors;
 
 public final class LineChartPanel extends JPanel {
+    private static final int PADDING = 30;
+    private static final int TICK_SIZE = 5;
+    private static final int TOOLTIP_MARGIN = 15;
+    private static final JBColor GRID_COLOR = JBColor.WHITE;
+    private static final JBColor AXIS_COLOR = JBColor.BLACK;
     public final Timer resizeTimer;
-    private final int PADDING = 30;
-    private final int TICK_SIZE = 5;
-    private final int TOOLTIP_MARGIN = 15;
-    private final JBColor GRID_COLOR = JBColor.WHITE;
-    private final Color AXIS_COLOR = JBColor.BLACK;
     public TimePointMode pointMode = TimePointMode.GENERIC;
     public LineCountMode lineMode = LineCountMode.CODE_LINES;
     public boolean refreshGraphic = true;
@@ -78,9 +76,6 @@ public final class LineChartPanel extends JPanel {
         ToolTipManager.sharedInstance().setInitialDelay(50);
         ToolTipManager.sharedInstance().setReshowDelay(75);
         ToolTipManager.sharedInstance().setDismissDelay(10000);
-
-
-
     }
 
     public void refreshChart() {
@@ -102,19 +97,18 @@ public final class LineChartPanel extends JPanel {
     }
 
     private void renderChart(Graphics2D g2d, List<TimePoint> points) {
-        g2d.setFont(new Font(EditorColorsManager.getInstance().getGlobalScheme().getEditorFontName(), Font.PLAIN, 14));
+        g2d.setFont(new Font(EditorColorsManager.getInstance().getGlobalScheme().getEditorFontName(), Font.PLAIN, 13));
         g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
         long minX = points.stream().mapToLong(TimePoint::getX).min().orElse(0);
         long maxX = points.stream().mapToLong(TimePoint::getX).max().orElse(0);
         int minY = 0;
-        int maxY = points.stream().mapToInt(TimePoint::getY).max().orElse(0);
+        int maxY = (int) (points.stream().mapToInt(TimePoint::getY).max().orElse(0) * 1.05F);
 
         double scaleX = (double) (getWidth() - 2 * PADDING) / (maxX - minX);
         double scaleY = (double) (getHeight() - 2 * PADDING) / (maxY - minY);
 
         long intervalY = (maxY - minY) / 5;
-
 
         List<LocalDate> dates = points.stream()
                 .map(p -> Instant.ofEpochMilli(p.getX()).atZone(ZoneId.systemDefault()).toLocalDate())
@@ -124,73 +118,11 @@ public final class LineChartPanel extends JPanel {
         LocalDate defaultMinDate = today.minusDays(7);
         LocalDate minDate = dates.stream().min(LocalDate::compareTo).orElse(defaultMinDate);
         LocalDate maxDate = dates.stream().max(LocalDate::compareTo).orElse(today);
-        long daysBetween = ChronoUnit.DAYS.between(minDate, maxDate);
-
-        long dateIncrement;
-        if (daysBetween <= 2) {
-            dateIncrement = 1;
-        } else if (daysBetween <= 7) {
-            dateIncrement = 2;
-        } else if (daysBetween <= 30) {
-            dateIncrement = 7;
-        } else {
-            dateIncrement = 30;
-        }
-
-        for (int i = 0; i <= 5; i++) {
-            if(i < dates.size()) {
-                LocalDate date = minDate.plusDays(i * dateIncrement);
-                if(!date.isAfter(maxDate)) {
-                    long dateMillis = date.atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli();
-                    int xTick = (int) ((dateMillis - minX) * scaleX + PADDING);
-
-                    g2d.setColor(GRID_COLOR.brighter());
-                    g2d.drawLine(xTick, PADDING, xTick, getHeight() - PADDING);
-
-                    g2d.setColor(AXIS_COLOR);
-                    g2d.drawLine(xTick, getHeight() - PADDING - TICK_SIZE, xTick, getHeight() - PADDING + TICK_SIZE);
-
-                    String dateString = date.toString();
-                    Rectangle2D stringBounds = g2d.getFontMetrics().getStringBounds(dateString, g2d);
-                    if(i == 0){
-                        g2d.drawString(dateString, (int) (xTick + stringBounds.getWidth()), getHeight() - PADDING + 20);
-                    }else {
-                        g2d.drawString(dateString, (int) (xTick - stringBounds.getWidth() / 2), getHeight() - PADDING + 20);
-                    }
-                }
-            }
-
-            int yTick = (int) (getHeight() - ((minY + intervalY * i - minY) * scaleY + PADDING));
-
-            g2d.setColor(GRID_COLOR.brighter());
-            g2d.drawLine(PADDING, yTick, getWidth() - PADDING, yTick);
-
-            g2d.setColor(AXIS_COLOR);
-            g2d.drawLine(PADDING - TICK_SIZE, yTick, PADDING + TICK_SIZE, yTick);
-            g2d.drawString(String.valueOf(minY + intervalY * i), PADDING - 25, yTick + 5);
-        }
-
-        BasicStroke lineStroke = new BasicStroke(2f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND);
-        g2d.setStroke(lineStroke);
-        GradientPaint lineGradient = new GradientPaint(0, 0, JBColor.BLUE, getWidth(), getHeight(), JBColor.CYAN);
-        g2d.setPaint(lineGradient);
-
-        for (int i = 0; i < points.size() - 1; i++) {
-            int x1 = (int) ((points.get(i).getX() - minX) * scaleX + PADDING);
-            int y1 = (int) (getHeight() - ((points.get(i).getY() - minY) * scaleY + PADDING));
-            int x2 = (int) ((points.get(i + 1).getX() - minX) * scaleX + PADDING);
-            int y2 = (int) (getHeight() - ((points.get(i + 1).getY() - minY) * scaleY + PADDING));
-
-            g2d.drawLine(x1, y1, x2, y2);
-            g2d.setColor(JBColor.ORANGE);
-            g2d.fillOval(x1 - 5, y1 - 5, 10, 10);
-        }
-
-        int xLast = (int) ((points.get(points.size() - 1).getX() - minX) * scaleX + PADDING);
-        int yLast = (int) (getHeight() - ((points.get(points.size() - 1).getY() - minY) * scaleY + PADDING));
-        g2d.fillOval(xLast - 5, yLast - 5, 10, 10);
 
 
+        drawAxis(g2d, minDate, maxDate, minX, scaleX, minY, scaleY, intervalY);
+
+        drawTimePoints(g2d, points, minX, scaleX, minY, scaleY);
 
         this.addMouseMotionListener(new MouseMotionAdapter() {
             @Override
@@ -201,8 +133,8 @@ public final class LineChartPanel extends JPanel {
                     int y = (int) (getHeight() - ((point.getY() - minY) * scaleY + PADDING));
                     if (e.getX() >= x - TOOLTIP_MARGIN && e.getX() <= x + TOOLTIP_MARGIN && e.getY() >= y - TOOLTIP_MARGIN && e.getY() <= y + TOOLTIP_MARGIN) {
                         setToolTipText(point.toString());
-                        g2d.setColor(JBColor.RED);
-                        g2d.fillOval(x - 7, y - 7, 14, 14);  // Highlighted point
+                        g2d.setColor(JBColor.ORANGE.brighter());
+                        g2d.fillOval(x - 7, y - 7, 14, 14);
                         ToolTipManager.sharedInstance().mouseMoved(e);
                         found = true;
                         break;
@@ -228,6 +160,75 @@ public final class LineChartPanel extends JPanel {
         if (offScreenImage != null) {
             g.drawImage(offScreenImage, 0, 0, this);
         }
+    }
+
+    private void drawAxis(Graphics2D g2d, LocalDate minDate, LocalDate maxDate, long minX, double scaleX, long minY, double scaleY, long intervalY) {
+        long daysBetween = ChronoUnit.DAYS.between(minDate, maxDate);
+        long dateIncrement;
+        if (daysBetween <= 2) {
+            dateIncrement = 1;
+        } else if (daysBetween <= 7) {
+            dateIncrement = 2;
+        } else if (daysBetween <= 30) {
+            dateIncrement = 7;
+        } else {
+            dateIncrement = 30;
+        }
+
+        for (int i = 0; i <= 5; i++) {
+            LocalDate date = minDate.plusDays(i * dateIncrement);
+            if (!date.isAfter(maxDate)) {
+                long dateMillis = date.atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli();
+                //Vertical Lines and X-Axis Labels
+                int xTick = (int) ((dateMillis - minX) * scaleX + PADDING + 14);
+
+                g2d.setColor(GRID_COLOR.brighter());
+                g2d.drawLine(xTick, PADDING, xTick, getHeight() - PADDING);
+
+                g2d.setColor(AXIS_COLOR);
+                g2d.drawLine(xTick, getHeight() - PADDING - TICK_SIZE, xTick, getHeight() - PADDING + TICK_SIZE);
+
+                String dateString = date.toString();
+                Rectangle2D stringBounds = g2d.getFontMetrics().getStringBounds(dateString, g2d);
+                if (i == 0) {
+                    g2d.drawString(dateString, xTick, getHeight() - PADDING + 20);
+                } else {
+                    g2d.drawString(dateString, (int) (xTick - stringBounds.getWidth() / 2), getHeight() - PADDING + 20);
+                }
+            }
+
+            //Horizontal Lines and Y-Axis labels
+            int yTick = (int) (getHeight() - ((minY + intervalY * i - minY) * scaleY + PADDING));
+
+            g2d.setColor(GRID_COLOR.brighter());
+            g2d.drawLine(PADDING, yTick, getWidth() - PADDING, yTick);
+
+            g2d.setColor(AXIS_COLOR);
+            g2d.drawLine(PADDING - TICK_SIZE, yTick, PADDING + TICK_SIZE, yTick);
+            UIHelper.drawRightAlignedText(g2d, String.valueOf(minY + intervalY * i), PADDING - 7, yTick + 5);
+        }
+    }
+
+    private void drawTimePoints(Graphics2D g2d, List<TimePoint> points, long minX, double scaleX, long minY, double scaleY) {
+        BasicStroke lineStroke = new BasicStroke(2f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND);
+        g2d.setStroke(lineStroke);
+        GradientPaint lineGradient = new GradientPaint(0, 0, JBColor.ORANGE, getWidth(), getHeight(), JBColor.CYAN);
+        g2d.setPaint(lineGradient);
+
+        for (int i = 0; i < points.size() - 1; i++) {
+            int x1 = (int) ((points.get(i).getX() - minX) * scaleX + PADDING);
+            int y1 = (int) (getHeight() - ((points.get(i).getY() - minY) * scaleY + PADDING));
+            int x2 = (int) ((points.get(i + 1).getX() - minX) * scaleX + PADDING);
+            int y2 = (int) (getHeight() - ((points.get(i + 1).getY() - minY) * scaleY + PADDING));
+
+            g2d.drawLine(x1, y1, x2, y2);
+            g2d.setColor(JBColor.ORANGE);
+            g2d.fillOval(x1 - 5, y1 - 5, 10, 10);
+        }
+
+        int xLast = (int) ((points.get(points.size() - 1).getX() - minX) * scaleX + PADDING);
+        int yLast = (int) (getHeight() - ((points.get(points.size() - 1).getY() - minY) * scaleY + PADDING));
+        g2d.fillOval(xLast - 5, yLast - 5, 10, 10);
     }
 
     public enum TimePointMode {COMMIT, GENERIC}
