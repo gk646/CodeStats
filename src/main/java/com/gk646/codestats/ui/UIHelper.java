@@ -44,6 +44,8 @@ import javax.swing.table.TableModel;
 import javax.swing.table.TableRowSorter;
 import java.awt.Component;
 import java.awt.Font;
+import java.awt.FontMetrics;
+import java.awt.Graphics2D;
 import java.awt.GridBagConstraints;
 import java.nio.charset.StandardCharsets;
 import java.util.Comparator;
@@ -157,6 +159,7 @@ public final class UIHelper {
 
         return comboBox;
     }
+
     public static ActionButton createButton(String text, String description, @NotNull Icon icon, Runnable action) {
         var anAction = new AnAction(text, description, icon) {
             @Override
@@ -167,4 +170,10 @@ public final class UIHelper {
         return new ActionButton(anAction, anAction.getTemplatePresentation(), text, ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE);
     }
 
+    public static void drawRightAlignedText(Graphics2D g2d, String text, int alignX, int y) {
+        FontMetrics fm = g2d.getFontMetrics();
+        int textWidth = fm.stringWidth(text);
+        int x = alignX - textWidth;
+        g2d.drawString(text, x, y);
+    }
 }

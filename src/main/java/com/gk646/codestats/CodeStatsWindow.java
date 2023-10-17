@@ -93,6 +93,13 @@ public final class CodeStatsWindow implements ToolWindowFactory, ToolWindowManag
             }
         });
 
+        TABBED_PANE.addChangeListener(e -> {
+            if (TABBED_PANE.getSelectedIndex() == 1) {
+                TIME_LINE.refreshGraphic = true;
+            }
+        });
+
+
         var content = ContentFactory.getInstance().createContent(mainPanel, "CodeStats", true);
         toolWindow.getContentManager().addContent(content);
     }
