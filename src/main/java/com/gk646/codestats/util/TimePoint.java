@@ -27,7 +27,15 @@ package com.gk646.codestats.util;
 import com.gk646.codestats.CodeStatsWindow;
 import com.gk646.codestats.ui.LineChartPanel;
 
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.ZoneId;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Random;
+
 public final class TimePoint {
+    public static final int MILLISEC_PER_DAY = 86400000;
     public long timestamp;
     public int linesCode;
     public int totalLines;
@@ -54,5 +62,36 @@ public final class TimePoint {
         } else {
             return totalLines;
         }
+    }
+
+    @Override
+    public String toString() {
+        if (CodeStatsWindow.TIME_LINE.lineMode == LineChartPanel.LineCountMode.TOTAL_LINES) {
+            return string + "| Total Lines:" + totalLines;
+        } else {
+            return string + "| Code Lines:" + linesCode;
+        }
+    }
+    public static List<TimePoint> generateMockTimePoints(int numPoints) {
+        Random rand = new Random();
+        List<TimePoint> mockPoints = new ArrayList<>();
+
+        for (int i = 0; i < numPoints; i++) {
+            TimePoint point = new TimePoint();
+
+            long randomMillisOffset = (long) i * TimePoint.MILLISEC_PER_DAY;
+            point.timestamp = System.currentTimeMillis() - randomMillisOffset;
+
+            point.linesCode = 50 + rand.nextInt(450);
+
+            point.totalLines = 100 + rand.nextInt(900);
+
+            LocalDate date = Instant.ofEpochMilli(point.timestamp).atZone(ZoneId.systemDefault()).toLocalDate();
+            point.string = date.toString();
+
+            mockPoints.add(point);
+        }
+
+        return mockPoints;
     }
 }

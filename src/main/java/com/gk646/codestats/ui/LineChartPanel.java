@@ -26,6 +26,7 @@ package com.gk646.codestats.ui;
 
 import com.gk646.codestats.settings.Save;
 import com.gk646.codestats.util.TimePoint;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.ui.JBColor;
 import com.intellij.util.ui.UIUtil;
 
@@ -33,10 +34,10 @@ import javax.swing.JPanel;
 import javax.swing.JTabbedPane;
 import javax.swing.Timer;
 import javax.swing.ToolTipManager;
-import javax.swing.UIManager;
 import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Component;
+import java.awt.Font;
 import java.awt.GradientPaint;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
@@ -44,8 +45,14 @@ import java.awt.RenderingHints;
 import java.awt.event.ActionEvent;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionAdapter;
+import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.ZoneId;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public final class LineChartPanel extends JPanel {
     public final Timer resizeTimer;
@@ -68,9 +75,12 @@ public final class LineChartPanel extends JPanel {
             }
         });
         resizeTimer.setRepeats(false);
-        ToolTipManager.sharedInstance().setInitialDelay(100);
-        ToolTipManager.sharedInstance().setReshowDelay(200);
+        ToolTipManager.sharedInstance().setInitialDelay(50);
+        ToolTipManager.sharedInstance().setReshowDelay(75);
         ToolTipManager.sharedInstance().setDismissDelay(10000);
+
+
+
     }
 
     public void refreshChart() {
@@ -82,7 +92,7 @@ public final class LineChartPanel extends JPanel {
         Graphics2D offScreenGraphics = offScreenImage.createGraphics();
 
         if (pointMode == TimePointMode.GENERIC) {
-            renderChart(offScreenGraphics, Save.getInstance().genericTimePoints);
+            renderChart(offScreenGraphics, TimePoint.generateMockTimePoints(100));
         } else {
             renderChart(offScreenGraphics, Save.getInstance().commitTimePoints);
         }
@@ -92,9 +102,10 @@ public final class LineChartPanel extends JPanel {
     }
 
     private void renderChart(Graphics2D g2d, List<TimePoint> points) {
+        g2d.setFont(new Font(EditorColorsManager.getInstance().getGlobalScheme().getEditorFontName(), Font.PLAIN, 14));
         g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
-        long minX = points.stream().mapToLong(TimePoint::getY).min().orElse(0);
+        long minX = points.stream().mapToLong(TimePoint::getX).min().orElse(0);
         long maxX = points.stream().mapToLong(TimePoint::getX).max().orElse(0);
         int minY = 0;
         int maxY = points.stream().mapToInt(TimePoint::getY).max().orElse(0);
@@ -102,30 +113,66 @@ public final class LineChartPanel extends JPanel {
         double scaleX = (double) (getWidth() - 2 * PADDING) / (maxX - minX);
         double scaleY = (double) (getHeight() - 2 * PADDING) / (maxY - minY);
 
-        g2d.setColor(GRID_COLOR.brighter());
-        g2d.setFont(UIManager.getFont("Label.font").deriveFont((float) 12));
-        long intervalX = (maxX - minX) / 5;
-        int intervalY = (maxY - minY) / 5;
+        long intervalY = (maxY - minY) / 5;
+
+
+        List<LocalDate> dates = points.stream()
+                .map(p -> Instant.ofEpochMilli(p.getX()).atZone(ZoneId.systemDefault()).toLocalDate())
+                .toList();
+
+        LocalDate today = LocalDate.now();
+        LocalDate defaultMinDate = today.minusDays(7);
+        LocalDate minDate = dates.stream().min(LocalDate::compareTo).orElse(defaultMinDate);
+        LocalDate maxDate = dates.stream().max(LocalDate::compareTo).orElse(today);
+        long daysBetween = ChronoUnit.DAYS.between(minDate, maxDate);
+
+        long dateIncrement;
+        if (daysBetween <= 2) {
+            dateIncrement = 1;
+        } else if (daysBetween <= 7) {
+            dateIncrement = 2;
+        } else if (daysBetween <= 30) {
+            dateIncrement = 7;
+        } else {
+            dateIncrement = 30;
+        }
 
         for (int i = 0; i <= 5; i++) {
-            int xTick = (int) ((minX + intervalX * i - minX) * scaleX + PADDING);
+            if(i < dates.size()) {
+                LocalDate date = minDate.plusDays(i * dateIncrement);
+                if(!date.isAfter(maxDate)) {
+                    long dateMillis = date.atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli();
+                    int xTick = (int) ((dateMillis - minX) * scaleX + PADDING);
+
+                    g2d.setColor(GRID_COLOR.brighter());
+                    g2d.drawLine(xTick, PADDING, xTick, getHeight() - PADDING);
+
+                    g2d.setColor(AXIS_COLOR);
+                    g2d.drawLine(xTick, getHeight() - PADDING - TICK_SIZE, xTick, getHeight() - PADDING + TICK_SIZE);
+
+                    String dateString = date.toString();
+                    Rectangle2D stringBounds = g2d.getFontMetrics().getStringBounds(dateString, g2d);
+                    if(i == 0){
+                        g2d.drawString(dateString, (int) (xTick + stringBounds.getWidth()), getHeight() - PADDING + 20);
+                    }else {
+                        g2d.drawString(dateString, (int) (xTick - stringBounds.getWidth() / 2), getHeight() - PADDING + 20);
+                    }
+                }
+            }
+
             int yTick = (int) (getHeight() - ((minY + intervalY * i - minY) * scaleY + PADDING));
 
-            g2d.drawLine(xTick, PADDING, xTick, getHeight() - PADDING);
+            g2d.setColor(GRID_COLOR.brighter());
             g2d.drawLine(PADDING, yTick, getWidth() - PADDING, yTick);
 
             g2d.setColor(AXIS_COLOR);
-            g2d.drawLine(xTick, getHeight() - PADDING - TICK_SIZE, xTick, getHeight() - PADDING + TICK_SIZE);
             g2d.drawLine(PADDING - TICK_SIZE, yTick, PADDING + TICK_SIZE, yTick);
-
-            g2d.setColor(GRID_COLOR);
-            g2d.drawString(String.valueOf(minX + intervalX * i), xTick - 10, getHeight() - PADDING + 20);
             g2d.drawString(String.valueOf(minY + intervalY * i), PADDING - 25, yTick + 5);
         }
 
         BasicStroke lineStroke = new BasicStroke(2f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND);
         g2d.setStroke(lineStroke);
-        GradientPaint lineGradient = new GradientPaint(0, 0, Color.BLUE, getWidth(), getHeight(), Color.CYAN);
+        GradientPaint lineGradient = new GradientPaint(0, 0, JBColor.BLUE, getWidth(), getHeight(), JBColor.CYAN);
         g2d.setPaint(lineGradient);
 
         for (int i = 0; i < points.size() - 1; i++) {
@@ -143,6 +190,8 @@ public final class LineChartPanel extends JPanel {
         int yLast = (int) (getHeight() - ((points.get(points.size() - 1).getY() - minY) * scaleY + PADDING));
         g2d.fillOval(xLast - 5, yLast - 5, 10, 10);
 
+
+
         this.addMouseMotionListener(new MouseMotionAdapter() {
             @Override
             public void mouseMoved(MouseEvent e) {
@@ -151,7 +200,7 @@ public final class LineChartPanel extends JPanel {
                     int x = (int) ((point.getX() - minX) * scaleX + PADDING);
                     int y = (int) (getHeight() - ((point.getY() - minY) * scaleY + PADDING));
                     if (e.getX() >= x - TOOLTIP_MARGIN && e.getX() <= x + TOOLTIP_MARGIN && e.getY() >= y - TOOLTIP_MARGIN && e.getY() <= y + TOOLTIP_MARGIN) {
-                        setToolTipText("X: " + point.getX() + ", Y: " + point.getY());
+                        setToolTipText(point.toString());
                         g2d.setColor(JBColor.RED);
                         g2d.fillOval(x - 7, y - 7, 14, 14);  // Highlighted point
                         ToolTipManager.sharedInstance().mouseMoved(e);
