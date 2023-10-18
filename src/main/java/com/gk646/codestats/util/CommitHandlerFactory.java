@@ -22,39 +22,25 @@
  * SOFTWARE.
  */
 
-package com.gk646.codestats.stats;
+package com.gk646.codestats.util;
 
-/**
- * Describes an entry into the OverView tab of the {@link com.gk646.codestats.CodeStatsWindow#TABBED_PANE}
- */
-public final class OverViewEntry {
-    int count;
-    long sizeMin = Integer.MAX_VALUE;
-    long sizeSum;
-    long sizeMax;
-    int lines;
-    int linesMin = Integer.MAX_VALUE;
-    int linesMax;
-    int linesCode;
+import com.gk646.codestats.CodeStatsWindow;
+import com.intellij.openapi.vcs.CheckinProjectPanel;
+import com.intellij.openapi.vcs.changes.CommitContext;
+import com.intellij.openapi.vcs.checkin.CheckinHandler;
+import com.intellij.openapi.vcs.checkin.CheckinHandlerFactory;
+import org.jetbrains.annotations.NotNull;
 
-    public void setValues(long size, int totalLines, int sourceCodeLines) {
-        count++;
+public final class CommitHandlerFactory extends CheckinHandlerFactory {
 
-        sizeSum += size;
-        if (size < sizeMin) {
-            sizeMin = size;
+    @Override
+    public @NotNull CheckinHandler createHandler(@NotNull CheckinProjectPanel panel, @NotNull CommitContext commitContext) {
+        var commitMsg = panel.getCommitMessage();
+        if (commitMsg.length() > 25) {
+            CodeStatsWindow.PARSER.commitText = commitMsg.substring(0, 25);
+        } else {
+            CodeStatsWindow.PARSER.commitText = commitMsg;
         }
-        if (size > sizeMax) {
-            sizeMax = size;
-        }
-
-        lines += totalLines;
-        if (totalLines < linesMin) {
-            linesMin = totalLines;
-        }
-        if (totalLines > linesMax) {
-            linesMax = totalLines;
-        }
-        linesCode += sourceCodeLines;
+        return new CommitListener();
     }
 }

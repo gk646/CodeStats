@@ -24,21 +24,19 @@
 
 package com.gk646.codestats.ui;
 
-import com.gk646.codestats.settings.Save;
+import com.gk646.codestats.settings.PersistentSave;
 import com.gk646.codestats.util.TimePoint;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
-import com.intellij.openapi.ui.ComboBox;
 import com.intellij.ui.JBColor;
+import com.intellij.ui.components.JBRadioButton;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 
-import javax.swing.JButton;
-import javax.swing.JComboBox;
 import javax.swing.JPanel;
 import javax.swing.JTabbedPane;
 import javax.swing.Timer;
 import javax.swing.ToolTipManager;
 import java.awt.BasicStroke;
-import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.Font;
 import java.awt.Graphics;
@@ -52,23 +50,39 @@ import java.awt.image.BufferedImage;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
+
+/**
+ * A component that uses only AWT or SWING elements to render a dynamic line chart.
+ * <p>
+ * Optimizations include:
+ * <ol>
+ *     <li>Buffering: Utilizes an offscreen buffer, {@link #offScreenImage}, to minimize unnecessary redraws.</li>
+ *     <li>Deferred Redraw: Implements a timer, {@link #resizeTimer}, to delay the redraw, ensuring it only triggers if there hasn't been a resize event in the last 50 ms.</li>
+ * </ol>
+ * <p>
+ * These enhancements ensure smoother rendering and performance improvements for the chart.
+ */
 
 public final class LineChartPanel extends JPanel {
     private static final int PADDING_LEFT = 45;
     private static final int PADDING_RIGHT = 5;
-    private static final int PADDING_TOP = 30;
-    private static final int PADDING_BOTTOM = 25;
+    private static final int PADDING_TOP = 35;
+    private static final int PADDING_BOTTOM = 20;
     private static final int TICK_SIZE = 5;
     private static final int TOOLTIP_MARGIN = 15;
     private static final JBColor GRID_COLOR = JBColor.WHITE;
     private static final JBColor AXIS_COLOR = JBColor.BLACK;
     private static final Font AXIS_FONT = new Font(EditorColorsManager.getInstance().getGlobalScheme().getEditorFontName(), Font.PLAIN, 12);
+    private static final JBRadioButton codeLines = new JBRadioButton("CODE lines");
+    private static final JBRadioButton totalLines = new JBRadioButton("Total lines");
+    private static final JBRadioButton genericPoints = new JBRadioButton("Generic");
+    private static final JBRadioButton commitPoints = new JBRadioButton("Commits");
     public final Timer resizeTimer;
-    private final JButton exampleButton;
-    private final JComboBox<String> exampleDropdown;
-    private final ChartMouseMotionListener mouseListener = new ChartMouseMotionListener();
+    private final ChartMouseMotionListener chartMouseListener = new ChartMouseMotionListener();
     public TimePointMode pointMode = TimePointMode.GENERIC;
     public LineCountMode lineMode = LineCountMode.CODE_LINES;
     public boolean refreshGraphic = true;
@@ -83,41 +97,42 @@ public final class LineChartPanel extends JPanel {
             }
         });
         resizeTimer.setRepeats(false);
+
         ToolTipManager.sharedInstance().setInitialDelay(5);
         ToolTipManager.sharedInstance().setReshowDelay(10);
         ToolTipManager.sharedInstance().setDismissDelay(10000);
-        this.addMouseMotionListener(mouseListener);
 
-        // setLayout(new BorderLayout());
+        this.addMouseMotionListener(chartMouseListener);
 
-        exampleButton = new JButton("Example");
-        exampleDropdown = new ComboBox<>(new String[]{"Option 1", "Option 2", "Option 3"});
-
-        this.add(exampleButton, BorderLayout.NORTH);
-        this.add(exampleDropdown, BorderLayout.NORTH);
+        UIHelper.addTimeLineButtons(this, commitPoints, genericPoints, codeLines, totalLines);
     }
 
+    /**
+     * Redraws the entire timeline to the {@link #offScreenImage} and choose the right timepoints based on the current {@link #pointMode}.<br>
+     * Additionally, triggers a {@link #repaint()} to redraw the JPanel on a top-level.
+     */
     public void refreshChart() {
         offScreenImage = UIUtil.createImage(this, getWidth(), getHeight(), BufferedImage.TYPE_INT_ARGB);
 
         Graphics2D offScreenGraphics = offScreenImage.createGraphics();
 
         if (pointMode == TimePointMode.GENERIC) {
-            renderChart(offScreenGraphics, Save.getInstance().genericTimePoints);
+            renderChart(offScreenGraphics, PersistentSave.getInstance().genericTimePoints);
         } else {
-            renderChart(offScreenGraphics, Save.getInstance().commitTimePoints);
+            renderChart(offScreenGraphics, PersistentSave.getInstance().commitTimePoints);
         }
 
         offScreenGraphics.dispose();
         repaint();
     }
 
-    private void renderChart(Graphics2D g2d, List<TimePoint> points) {
+    private void renderChart(@NotNull Graphics2D g2d, @NotNull List<TimePoint> points) {
         g2d.setFont(AXIS_FONT);
         g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+        boolean empty = points.isEmpty();
 
-        long minX = Long.MAX_VALUE;
-        long maxX = Long.MIN_VALUE;
+        long minX = empty ? ZonedDateTime.now().toInstant().toEpochMilli() : Long.MAX_VALUE;
+        long maxX = empty ? ZonedDateTime.now().toInstant().toEpochMilli() : Long.MIN_VALUE;
         int maxY = Integer.MIN_VALUE;
 
         for (TimePoint p : points) {
@@ -128,17 +143,25 @@ public final class LineChartPanel extends JPanel {
             int y = p.getY();
             if (y > maxY) maxY = y;
         }
+
         var maxDate = Instant.ofEpochMilli(maxX).atZone(ZoneId.systemDefault()).toLocalDate();
         var minDate = Instant.ofEpochMilli(minX).atZone(ZoneId.systemDefault()).toLocalDate();
 
-        double scaleX = (double) (getWidth() - PADDING_LEFT - PADDING_RIGHT) / (maxX - minX);
+        double scaleX;
         double scaleY = (double) (getHeight() - PADDING_TOP - PADDING_BOTTOM) / maxY;
 
-        drawAxis(g2d, minDate, maxDate, minX, scaleX, scaleY, maxY / 5);
+        if (maxX == minX) {
+            maxDate = minDate.plusDays(1);
+            scaleX = 1.0;
+        } else {
+            scaleX = (double) (getWidth() - PADDING_LEFT - PADDING_RIGHT) / (maxX - minX);
+        }
+
+        chartMouseListener.update(minX, scaleX, scaleY, points, getWidth(), getHeight());
+
+        drawAxis(g2d, minDate, maxDate, minX, scaleX, scaleY, empty ? 0 : maxY / 5);
+        if (empty) return;
         drawTimePoints(g2d, points, minX, scaleX, scaleY);
-
-
-        mouseListener.update(minX, scaleX, scaleY, points, getWidth(), getHeight());
     }
 
     @Override
@@ -146,9 +169,7 @@ public final class LineChartPanel extends JPanel {
         super.paintComponent(g);
 
         if (refreshGraphic) {
-            var time = System.nanoTime();
             refreshChart();
-            System.out.println((System.nanoTime() - time) / 1000);
             refreshGraphic = false;
         }
 
@@ -172,33 +193,36 @@ public final class LineChartPanel extends JPanel {
         } else {
             dateIncrement = 30;
         }
-
+        LocalDate currentXTickDate = minDate;
         var fm = g2d.getFontMetrics();
         for (int i = 0; i < 6; i++) {
-            LocalDate date = minDate.plusDays(i * dateIncrement);
-            if (!date.isAfter(maxDate)) {
-                long dateMillis = date.atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli();
-                if (dateMillis < minX) {
-                    dateMillis = minX;
-                }
-                //Vertical Lines and X-Axis Labels
-                int xTick = (int) ((dateMillis - minX) * scaleX + PADDING_LEFT);
-
-                g2d.setColor(GRID_COLOR.brighter());
-                g2d.drawLine(xTick, PADDING_TOP, xTick, getHeight() - PADDING_BOTTOM);
-
-
-                g2d.setColor(AXIS_COLOR);
-                g2d.drawLine(xTick, getHeight() - PADDING_BOTTOM - TICK_SIZE, xTick, getHeight() - PADDING_BOTTOM + TICK_SIZE);
-
-                String dateString = date.toString();
-                Rectangle2D stringBounds = g2d.getFontMetrics().getStringBounds(dateString, g2d);
-                if (i == 0) {
-                    g2d.drawString(dateString, xTick, getHeight() - PADDING_BOTTOM + 20);
-                } else {
-                    g2d.drawString(dateString, (int) (xTick - stringBounds.getWidth() / 2), getHeight() - PADDING_BOTTOM + 20);
-                }
+            long dateMillis;
+            if (i == 0) {
+                dateMillis = minX;
+            } else {
+                currentXTickDate = minDate.plusDays(i * dateIncrement);
+                dateMillis = currentXTickDate.atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli();
             }
+            //Vertical Lines and X-Axis Labels
+
+            int xTick = (int) ((dateMillis - minX) * scaleX + PADDING_LEFT);
+            System.out.println(dateMillis - minX);
+            System.out.println(scaleX);
+
+            g2d.setColor(GRID_COLOR.brighter());
+            g2d.drawLine(xTick, PADDING_TOP, xTick, getHeight() - PADDING_BOTTOM);
+
+            g2d.setColor(AXIS_COLOR);
+            g2d.drawLine(xTick, getHeight() - PADDING_BOTTOM - TICK_SIZE, xTick, getHeight() - PADDING_BOTTOM + TICK_SIZE);
+
+            String dateString = currentXTickDate.toString();
+            Rectangle2D stringBounds = g2d.getFontMetrics().getStringBounds(dateString, g2d);
+            if (i == 0) {
+                g2d.drawString(dateString, xTick, getHeight() - PADDING_BOTTOM + 17);
+            } else {
+                g2d.drawString(dateString, (int) (xTick - stringBounds.getWidth() / 2), getHeight() - PADDING_BOTTOM + 17);
+            }
+
             //Horizontal Lines and Y-Axis labels
             int yTick = (int) (getHeight() - PADDING_BOTTOM - (intervalY * i) * scaleY);
 
@@ -213,7 +237,7 @@ public final class LineChartPanel extends JPanel {
         }
     }
 
-    private void drawTimePoints(Graphics2D g2d, List<TimePoint> points, long minX, double scaleX, double scaleY) {
+    private void drawTimePoints(@NotNull Graphics2D g2d, @NotNull List<TimePoint> points, long minX, double scaleX, double scaleY) {
         BasicStroke lineStroke = new BasicStroke(2f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND);
         g2d.setStroke(lineStroke);
 
@@ -236,6 +260,10 @@ public final class LineChartPanel extends JPanel {
 
     public enum LineCountMode {TOTAL_LINES, CODE_LINES}
 
+    /**
+     * Handles tooltips for the line chart. <br>
+     * Created once and update each time {@link LineChartPanel#refreshChart()} is called.
+     */
     private class ChartMouseMotionListener extends MouseMotionAdapter {
         int width;
         int height;
@@ -245,7 +273,7 @@ public final class LineChartPanel extends JPanel {
         private List<TimePoint> points;
 
         public ChartMouseMotionListener() {
-
+            //Created once at startup with default values as it is context-sensitive
         }
 
         public void update(long minX, double scaleX, double scaleY, List<TimePoint> points, int width, int height) {

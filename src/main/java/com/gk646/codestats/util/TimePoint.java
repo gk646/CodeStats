@@ -26,6 +26,8 @@ package com.gk646.codestats.util;
 
 import com.gk646.codestats.CodeStatsWindow;
 import com.gk646.codestats.ui.LineChartPanel;
+import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NotNull;
 
 import java.time.Instant;
 import java.time.LocalDate;
@@ -34,29 +36,47 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
+/**
+ * A simple class imitating {@link java.awt.Point} but with the ability to return different values based on outside parameters such as {@link com.gk646.codestats.ui.LineChartPanel.TimePointMode}.
+ */
+
 public final class TimePoint {
     public static final int MILLISEC_PER_DAY = 86400000;
+    /**
+     * The current timestamp as per {@link System#currentTimeMillis()}
+     */
     public long timestamp;
     public int linesCode;
     public int totalLines;
-    //Date for GENERIC, commit msg for COMMIT
-    public String string;
+    /**
+     * The {@link LocalDate} as string when created with {@link com.gk646.codestats.ui.LineChartPanel.TimePointMode#GENERIC} and up to 25 character of the commit message with {@link com.gk646.codestats.ui.LineChartPanel.TimePointMode#COMMIT}
+     */
+    public String info;
 
+    /**
+     * Empty constructor for the {@link com.intellij.openapi.components.PersistentStateComponent} interface
+     */
     public TimePoint() {
     }
 
-    public TimePoint(long timestamp, int linesCode, int totalLines, String string) {
+    public TimePoint(long timestamp, int linesCode, int totalLines, String info) {
         this.timestamp = timestamp;
         this.linesCode = linesCode;
         this.totalLines = totalLines;
-        this.string = string;
+        this.info = info;
     }
 
-    public static List<TimePoint> generateMockTimePoints(int numPoints) {
+    /**
+     * To test the scaling and visuals of the line chart
+     *
+     * @param numPoints
+     * @return
+     */
+    public static @NotNull List<TimePoint> generateMockTimePoints(int numPoints) {
         Random rand = new Random();
         List<TimePoint> mockPoints = new ArrayList<>();
 
-        for (int i = 0; i < numPoints*4; i++) {
+        for (int i = 0; i < numPoints * 4; i++) {
             TimePoint point = new TimePoint();
 
             long randomMillisOffset = (long) i * TimePoint.MILLISEC_PER_DAY / 2;
@@ -67,7 +87,7 @@ public final class TimePoint {
             point.totalLines = 20000 + rand.nextInt(10000);
 
             LocalDate date = Instant.ofEpochMilli(point.timestamp).atZone(ZoneId.systemDefault()).toLocalDate();
-            point.string = date.toString();
+            point.info = date.toString();
 
             mockPoints.add(point);
         }
@@ -87,12 +107,13 @@ public final class TimePoint {
         }
     }
 
+    @Contract(pure = true)
     @Override
-    public String toString() {
+    public @NotNull String toString() {
         if (CodeStatsWindow.TIME_LINE.lineMode == LineChartPanel.LineCountMode.TOTAL_LINES) {
-            return string + "| Total Lines:" + totalLines;
+            return info + " | Total Lines:" + totalLines;
         } else {
-            return string + "| Code Lines:" + linesCode;
+            return info + " | Code Lines:" + linesCode;
         }
     }
 }

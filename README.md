@@ -15,11 +15,11 @@ CodeStats is an opensource statistics plugin for JetBrains IDE's with focus on a
 - Speed and Efficiency
     - Optimized for speed it runs faster than other popular statistic plugins
 - Features
-    - Tracks file size, blank lines and comments and documentation and more!
+    - Shows file size, blank lines, comments, documentation and shows you a timeline of past statistics
 - Integration
     - CodeStats is nicely integrated with the IDE with its own toolwindow and settings menu
 - Customization 
-    - Allows for file-type whitelisting, excluding filetypes, excluding folders and more!
+    - Allows for file-type whitelisting, excluding filetypes, excluding folders and choosing text encodings!
 
 ### How it works
 

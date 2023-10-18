@@ -22,39 +22,22 @@
  * SOFTWARE.
  */
 
-package com.gk646.codestats.stats;
+package com.gk646.codestats.util;
 
-/**
- * Describes an entry into the OverView tab of the {@link com.gk646.codestats.CodeStatsWindow#TABBED_PANE}
- */
-public final class OverViewEntry {
-    int count;
-    long sizeMin = Integer.MAX_VALUE;
-    long sizeSum;
-    long sizeMax;
-    int lines;
-    int linesMin = Integer.MAX_VALUE;
-    int linesMax;
-    int linesCode;
+import com.gk646.codestats.CodeStatsWindow;
+import com.intellij.openapi.vcs.checkin.CheckinHandler;
 
-    public void setValues(long size, int totalLines, int sourceCodeLines) {
-        count++;
 
-        sizeSum += size;
-        if (size < sizeMin) {
-            sizeMin = size;
-        }
-        if (size > sizeMax) {
-            sizeMax = size;
-        }
+public final class CommitListener extends CheckinHandler {
 
-        lines += totalLines;
-        if (totalLines < linesMin) {
-            linesMin = totalLines;
-        }
-        if (totalLines > linesMax) {
-            linesMax = totalLines;
-        }
-        linesCode += sourceCodeLines;
+    CommitListener() {
+
+    }
+
+    @Override
+    public void checkinSuccessful() {
+        super.checkinSuccessful();
+        CodeStatsWindow.PARSER.commitHappened = true;
+        CodeStatsWindow.update(true);
     }
 }

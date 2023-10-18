@@ -24,7 +24,15 @@
 
 package com.gk646.codestats.stats;
 
+import com.gk646.codestats.settings.SettingsPanel;
+
+/**
+ * Describes an entry into filetype tabs as specified by the {@link SettingsPanel#includedFileTypesField}
+ */
 public final class StatEntry {
+    /**
+     * File name including the filetype e.g. "EventHandler.java"
+     */
     final String name;
     int totalLines;
     int sourceCodeLines;
