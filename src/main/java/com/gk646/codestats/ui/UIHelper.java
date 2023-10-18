@@ -170,10 +170,4 @@ public final class UIHelper {
         return new ActionButton(anAction, anAction.getTemplatePresentation(), text, ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE);
     }
 
-    public static void drawRightAlignedText(Graphics2D g2d, String text, int alignX, int y) {
-        FontMetrics fm = g2d.getFontMetrics();
-        int textWidth = fm.stringWidth(text);
-        int x = alignX - textWidth;
-        g2d.drawString(text, x, y);
-    }
 }

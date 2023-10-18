@@ -27,7 +27,6 @@ package com.gk646.codestats.settings;
 import com.gk646.codestats.CodeStatsWindow;
 import com.gk646.codestats.ui.LineChartPanel;
 import com.gk646.codestats.util.TimePoint;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
@@ -46,6 +45,7 @@ import java.util.List;
 )
 public final class Save implements PersistentStateComponent<Save> {
     private static final int MAX_SAVED_TIMEPOINTS = 200;
+    private static final int MAX_GENERIC_POINTS_PER_DAY = 2;
     public List<TimePoint> commitTimePoints = new ArrayList<>(15);
     public List<TimePoint> genericTimePoints = new ArrayList<>(15);
     public String excludedFileTypes = "wav;ttf;sql;tmp;dmp;ico;dat;svg;class;svn-base;svn-work;Extra;gif;png;jpg;mp3;jpeg;bmp;tga;tiff;ear;war;zip;jar;iml;iws;ipr;bz2;gz;pyc;rar";
@@ -65,15 +65,34 @@ public final class Save implements PersistentStateComponent<Save> {
         return CodeStatsWindow.project.getService(Save.class);
     }
 
-    public static void AddTimePoint(LineChartPanel.TimePointMode mode, TimePoint point) {
+    public static void addTimePoint(LineChartPanel.TimePointMode mode, TimePoint point) {
+        List<TimePoint> list;
         if (mode == LineChartPanel.TimePointMode.GENERIC) {
-            getInstance().genericTimePoints.add(point);
+            list = getInstance().genericTimePoints;
+            enforceGenericLimits(list);
         } else {
-            getInstance().genericTimePoints.add(point);
+            list = getInstance().commitTimePoints;
+        }
+        list.add(point);
+        enforceSizeLimit(list);
+    }
+
+    private static void enforceSizeLimit(List<TimePoint> points) {
+        if (points.size() == MAX_SAVED_TIMEPOINTS) {
+            points.remove(0);
+        }
+    }
+
+    private static void enforceGenericLimits(List<TimePoint> points) {
+        var last = points.get(points.size() - 1);
+
+        if (System.currentTimeMillis() - last.timestamp < TimePoint.MILLISEC_PER_DAY / 2) {
+            points.remove(points.size() - 1);
         }
     }
 
     @Override
+
     public Save getState() {
         return this;
     }

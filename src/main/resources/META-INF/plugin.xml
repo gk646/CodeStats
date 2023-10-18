@@ -45,6 +45,12 @@
     </p>
 ]]></description>
     <change-notes><![CDATA[
+     <h2>Release 1.4.5 | Beta </h2>
+      <ul>
+        <li>New TimeLine feature added</li>
+        <li>Fixed bug that prevented changing settings before opening the tool window once (again)</li>
+      </ul>
+
      <h2>Release 1.4.0</h2>
       <ul>
         <li>Plugin settings are now project specific</li>

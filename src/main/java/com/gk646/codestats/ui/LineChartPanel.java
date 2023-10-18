@@ -27,17 +27,20 @@ package com.gk646.codestats.ui;
 import com.gk646.codestats.settings.Save;
 import com.gk646.codestats.util.TimePoint;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.ui.ComboBox;
 import com.intellij.ui.JBColor;
 import com.intellij.util.ui.UIUtil;
 
+import javax.swing.JButton;
+import javax.swing.JComboBox;
 import javax.swing.JPanel;
 import javax.swing.JTabbedPane;
 import javax.swing.Timer;
 import javax.swing.ToolTipManager;
 import java.awt.BasicStroke;
+import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.Font;
-import java.awt.GradientPaint;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
@@ -53,12 +56,19 @@ import java.time.temporal.ChronoUnit;
 import java.util.List;
 
 public final class LineChartPanel extends JPanel {
-    private static final int PADDING = 30;
+    private static final int PADDING_LEFT = 45;
+    private static final int PADDING_RIGHT = 5;
+    private static final int PADDING_TOP = 30;
+    private static final int PADDING_BOTTOM = 25;
     private static final int TICK_SIZE = 5;
     private static final int TOOLTIP_MARGIN = 15;
     private static final JBColor GRID_COLOR = JBColor.WHITE;
     private static final JBColor AXIS_COLOR = JBColor.BLACK;
+    private static final Font AXIS_FONT = new Font(EditorColorsManager.getInstance().getGlobalScheme().getEditorFontName(), Font.PLAIN, 12);
     public final Timer resizeTimer;
+    private final JButton exampleButton;
+    private final JComboBox<String> exampleDropdown;
+    private final ChartMouseMotionListener mouseListener = new ChartMouseMotionListener();
     public TimePointMode pointMode = TimePointMode.GENERIC;
     public LineCountMode lineMode = LineCountMode.CODE_LINES;
     public boolean refreshGraphic = true;
@@ -73,21 +83,27 @@ public final class LineChartPanel extends JPanel {
             }
         });
         resizeTimer.setRepeats(false);
-        ToolTipManager.sharedInstance().setInitialDelay(50);
-        ToolTipManager.sharedInstance().setReshowDelay(75);
+        ToolTipManager.sharedInstance().setInitialDelay(5);
+        ToolTipManager.sharedInstance().setReshowDelay(10);
         ToolTipManager.sharedInstance().setDismissDelay(10000);
+        this.addMouseMotionListener(mouseListener);
+
+        // setLayout(new BorderLayout());
+
+        exampleButton = new JButton("Example");
+        exampleDropdown = new ComboBox<>(new String[]{"Option 1", "Option 2", "Option 3"});
+
+        this.add(exampleButton, BorderLayout.NORTH);
+        this.add(exampleDropdown, BorderLayout.NORTH);
     }
 
     public void refreshChart() {
-        int width = getWidth();
-        int height = getHeight();
-
-        offScreenImage = UIUtil.createImage(this, width, height, BufferedImage.TYPE_INT_ARGB);
+        offScreenImage = UIUtil.createImage(this, getWidth(), getHeight(), BufferedImage.TYPE_INT_ARGB);
 
         Graphics2D offScreenGraphics = offScreenImage.createGraphics();
 
         if (pointMode == TimePointMode.GENERIC) {
-            renderChart(offScreenGraphics, TimePoint.generateMockTimePoints(100));
+            renderChart(offScreenGraphics, Save.getInstance().genericTimePoints);
         } else {
             renderChart(offScreenGraphics, Save.getInstance().commitTimePoints);
         }
@@ -97,55 +113,32 @@ public final class LineChartPanel extends JPanel {
     }
 
     private void renderChart(Graphics2D g2d, List<TimePoint> points) {
-        g2d.setFont(new Font(EditorColorsManager.getInstance().getGlobalScheme().getEditorFontName(), Font.PLAIN, 13));
+        g2d.setFont(AXIS_FONT);
         g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
-        long minX = points.stream().mapToLong(TimePoint::getX).min().orElse(0);
-        long maxX = points.stream().mapToLong(TimePoint::getX).max().orElse(0);
-        int minY = 0;
-        int maxY = (int) (points.stream().mapToInt(TimePoint::getY).max().orElse(0) * 1.05F);
+        long minX = Long.MAX_VALUE;
+        long maxX = Long.MIN_VALUE;
+        int maxY = Integer.MIN_VALUE;
 
-        double scaleX = (double) (getWidth() - 2 * PADDING) / (maxX - minX);
-        double scaleY = (double) (getHeight() - 2 * PADDING) / (maxY - minY);
+        for (TimePoint p : points) {
+            long x = p.getX();
+            if (x < minX) minX = x;
+            if (x > maxX) maxX = x;
 
-        long intervalY = (maxY - minY) / 5;
+            int y = p.getY();
+            if (y > maxY) maxY = y;
+        }
+        var maxDate = Instant.ofEpochMilli(maxX).atZone(ZoneId.systemDefault()).toLocalDate();
+        var minDate = Instant.ofEpochMilli(minX).atZone(ZoneId.systemDefault()).toLocalDate();
 
-        List<LocalDate> dates = points.stream()
-                .map(p -> Instant.ofEpochMilli(p.getX()).atZone(ZoneId.systemDefault()).toLocalDate())
-                .toList();
+        double scaleX = (double) (getWidth() - PADDING_LEFT - PADDING_RIGHT) / (maxX - minX);
+        double scaleY = (double) (getHeight() - PADDING_TOP - PADDING_BOTTOM) / maxY;
 
-        LocalDate today = LocalDate.now();
-        LocalDate defaultMinDate = today.minusDays(7);
-        LocalDate minDate = dates.stream().min(LocalDate::compareTo).orElse(defaultMinDate);
-        LocalDate maxDate = dates.stream().max(LocalDate::compareTo).orElse(today);
+        drawAxis(g2d, minDate, maxDate, minX, scaleX, scaleY, maxY / 5);
+        drawTimePoints(g2d, points, minX, scaleX, scaleY);
 
 
-        drawAxis(g2d, minDate, maxDate, minX, scaleX, minY, scaleY, intervalY);
-
-        drawTimePoints(g2d, points, minX, scaleX, minY, scaleY);
-
-        this.addMouseMotionListener(new MouseMotionAdapter() {
-            @Override
-            public void mouseMoved(MouseEvent e) {
-                boolean found = false;
-                for (TimePoint point : points) {
-                    int x = (int) ((point.getX() - minX) * scaleX + PADDING);
-                    int y = (int) (getHeight() - ((point.getY() - minY) * scaleY + PADDING));
-                    if (e.getX() >= x - TOOLTIP_MARGIN && e.getX() <= x + TOOLTIP_MARGIN && e.getY() >= y - TOOLTIP_MARGIN && e.getY() <= y + TOOLTIP_MARGIN) {
-                        setToolTipText(point.toString());
-                        g2d.setColor(JBColor.ORANGE.brighter());
-                        g2d.fillOval(x - 7, y - 7, 14, 14);
-                        ToolTipManager.sharedInstance().mouseMoved(e);
-                        found = true;
-                        break;
-                    }
-                }
-
-                if (!found) {
-                    setToolTipText(null);
-                }
-            }
-        });
+        mouseListener.update(minX, scaleX, scaleY, points, getWidth(), getHeight());
     }
 
     @Override
@@ -153,7 +146,9 @@ public final class LineChartPanel extends JPanel {
         super.paintComponent(g);
 
         if (refreshGraphic) {
+            var time = System.nanoTime();
             refreshChart();
+            System.out.println((System.nanoTime() - time) / 1000);
             refreshGraphic = false;
         }
 
@@ -162,76 +157,124 @@ public final class LineChartPanel extends JPanel {
         }
     }
 
-    private void drawAxis(Graphics2D g2d, LocalDate minDate, LocalDate maxDate, long minX, double scaleX, long minY, double scaleY, long intervalY) {
+    private void drawAxis(Graphics2D g2d, LocalDate minDate, LocalDate maxDate, long minX, double scaleX, double scaleY, long intervalY) {
         long daysBetween = ChronoUnit.DAYS.between(minDate, maxDate);
+        long idealIncrement = daysBetween / 6;
         long dateIncrement;
-        if (daysBetween <= 2) {
+        if (idealIncrement <= 1) {
             dateIncrement = 1;
-        } else if (daysBetween <= 7) {
+        } else if (idealIncrement <= 3) {
             dateIncrement = 2;
-        } else if (daysBetween <= 30) {
+        } else if (idealIncrement <= 10) {
             dateIncrement = 7;
+        } else if (idealIncrement <= 15) {
+            dateIncrement = 15;
         } else {
             dateIncrement = 30;
         }
 
-        for (int i = 0; i <= 5; i++) {
+        var fm = g2d.getFontMetrics();
+        for (int i = 0; i < 6; i++) {
             LocalDate date = minDate.plusDays(i * dateIncrement);
             if (!date.isAfter(maxDate)) {
                 long dateMillis = date.atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli();
+                if (dateMillis < minX) {
+                    dateMillis = minX;
+                }
                 //Vertical Lines and X-Axis Labels
-                int xTick = (int) ((dateMillis - minX) * scaleX + PADDING + 14);
+                int xTick = (int) ((dateMillis - minX) * scaleX + PADDING_LEFT);
 
                 g2d.setColor(GRID_COLOR.brighter());
-                g2d.drawLine(xTick, PADDING, xTick, getHeight() - PADDING);
+                g2d.drawLine(xTick, PADDING_TOP, xTick, getHeight() - PADDING_BOTTOM);
+
 
                 g2d.setColor(AXIS_COLOR);
-                g2d.drawLine(xTick, getHeight() - PADDING - TICK_SIZE, xTick, getHeight() - PADDING + TICK_SIZE);
+                g2d.drawLine(xTick, getHeight() - PADDING_BOTTOM - TICK_SIZE, xTick, getHeight() - PADDING_BOTTOM + TICK_SIZE);
 
                 String dateString = date.toString();
                 Rectangle2D stringBounds = g2d.getFontMetrics().getStringBounds(dateString, g2d);
                 if (i == 0) {
-                    g2d.drawString(dateString, xTick, getHeight() - PADDING + 20);
+                    g2d.drawString(dateString, xTick, getHeight() - PADDING_BOTTOM + 20);
                 } else {
-                    g2d.drawString(dateString, (int) (xTick - stringBounds.getWidth() / 2), getHeight() - PADDING + 20);
+                    g2d.drawString(dateString, (int) (xTick - stringBounds.getWidth() / 2), getHeight() - PADDING_BOTTOM + 20);
                 }
             }
-
             //Horizontal Lines and Y-Axis labels
-            int yTick = (int) (getHeight() - ((minY + intervalY * i - minY) * scaleY + PADDING));
+            int yTick = (int) (getHeight() - PADDING_BOTTOM - (intervalY * i) * scaleY);
 
             g2d.setColor(GRID_COLOR.brighter());
-            g2d.drawLine(PADDING, yTick, getWidth() - PADDING, yTick);
+            g2d.drawLine(PADDING_LEFT, yTick, getWidth() - PADDING_RIGHT, yTick);
+
 
             g2d.setColor(AXIS_COLOR);
-            g2d.drawLine(PADDING - TICK_SIZE, yTick, PADDING + TICK_SIZE, yTick);
-            UIHelper.drawRightAlignedText(g2d, String.valueOf(minY + intervalY * i), PADDING - 7, yTick + 5);
+            g2d.drawLine(PADDING_LEFT - TICK_SIZE, yTick, PADDING_LEFT + TICK_SIZE, yTick);
+            var s = String.valueOf(intervalY * i);
+            g2d.drawString(s, PADDING_LEFT - 7 - fm.stringWidth(s), yTick + 5);
         }
     }
 
-    private void drawTimePoints(Graphics2D g2d, List<TimePoint> points, long minX, double scaleX, long minY, double scaleY) {
+    private void drawTimePoints(Graphics2D g2d, List<TimePoint> points, long minX, double scaleX, double scaleY) {
         BasicStroke lineStroke = new BasicStroke(2f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND);
         g2d.setStroke(lineStroke);
-        GradientPaint lineGradient = new GradientPaint(0, 0, JBColor.ORANGE, getWidth(), getHeight(), JBColor.CYAN);
-        g2d.setPaint(lineGradient);
 
+        g2d.setColor(JBColor.ORANGE);
         for (int i = 0; i < points.size() - 1; i++) {
-            int x1 = (int) ((points.get(i).getX() - minX) * scaleX + PADDING);
-            int y1 = (int) (getHeight() - ((points.get(i).getY() - minY) * scaleY + PADDING));
-            int x2 = (int) ((points.get(i + 1).getX() - minX) * scaleX + PADDING);
-            int y2 = (int) (getHeight() - ((points.get(i + 1).getY() - minY) * scaleY + PADDING));
+            int x1 = (int) ((points.get(i).getX() - minX) * scaleX + PADDING_LEFT);
+            int y1 = (int) (getHeight() - ((points.get(i).getY()) * scaleY + PADDING_BOTTOM));
+            int x2 = (int) ((points.get(i + 1).getX() - minX) * scaleX + PADDING_LEFT);
+            int y2 = (int) (getHeight() - ((points.get(i + 1).getY()) * scaleY + PADDING_BOTTOM));
 
             g2d.drawLine(x1, y1, x2, y2);
-            g2d.setColor(JBColor.ORANGE);
             g2d.fillOval(x1 - 5, y1 - 5, 10, 10);
         }
-
-        int xLast = (int) ((points.get(points.size() - 1).getX() - minX) * scaleX + PADDING);
-        int yLast = (int) (getHeight() - ((points.get(points.size() - 1).getY() - minY) * scaleY + PADDING));
+        int xLast = (int) ((points.get(points.size() - 1).getX() - minX) * scaleX + PADDING_LEFT);
+        int yLast = (int) (getHeight() - ((points.get(points.size() - 1).getY()) * scaleY + PADDING_BOTTOM));
         g2d.fillOval(xLast - 5, yLast - 5, 10, 10);
     }
 
     public enum TimePointMode {COMMIT, GENERIC}
 
     public enum LineCountMode {TOTAL_LINES, CODE_LINES}
+
+    private class ChartMouseMotionListener extends MouseMotionAdapter {
+        int width;
+        int height;
+        private long minX;
+        private double scaleX;
+        private double scaleY;
+        private List<TimePoint> points;
+
+        public ChartMouseMotionListener() {
+
+        }
+
+        public void update(long minX, double scaleX, double scaleY, List<TimePoint> points, int width, int height) {
+            this.width = width;
+            this.height = height;
+            this.minX = minX;
+            this.scaleX = scaleX;
+            this.scaleY = scaleY;
+            this.points = points;
+        }
+
+        @Override
+        public void mouseMoved(MouseEvent e) {
+            boolean found = false;
+            for (TimePoint point : points) {
+                int x = (int) ((point.getX() - minX) * scaleX + PADDING_LEFT);
+                int y = (int) (height - ((point.getY()) * scaleY + PADDING_BOTTOM));
+                if (e.getX() >= x - TOOLTIP_MARGIN && e.getX() <= x + TOOLTIP_MARGIN && e.getY() >= y - TOOLTIP_MARGIN && e.getY() <= y + TOOLTIP_MARGIN) {
+                    setToolTipText(point.toString());
+                    ToolTipManager.sharedInstance().mouseMoved(e);
+                    found = true;
+                    break;
+                }
+            }
+
+            if (!found) {
+                setToolTipText(null);
+            }
+        }
+    }
 }
+

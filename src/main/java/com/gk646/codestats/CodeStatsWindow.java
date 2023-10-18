@@ -40,12 +40,13 @@ import com.intellij.openapi.wm.ToolWindowFactory;
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener;
 import com.intellij.ui.components.JBTabbedPane;
 import com.intellij.ui.content.ContentFactory;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.JPanel;
 import javax.swing.JTabbedPane;
-import java.awt.BorderLayout;
-import java.awt.FlowLayout;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.nio.file.Path;
@@ -77,13 +78,29 @@ public final class CodeStatsWindow implements ToolWindowFactory, ToolWindowManag
         ActionButton settingsButton = UIHelper.createButton("Settings", "Customize CodeStats!", AllIcons.General.GearPlain,
                 () -> ShowSettingsUtil.getInstance().showSettingsDialog(project, Settings.class));
 
-        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        buttonPanel.add(refreshButton);
-        buttonPanel.add(settingsButton);
+        JPanel mainPanel = new JPanel(new GridBagLayout());
+        GridBagConstraints gbc = new GridBagConstraints();
 
-        JPanel mainPanel = new JPanel(new BorderLayout());
-        mainPanel.add(buttonPanel, BorderLayout.NORTH);
-        mainPanel.add(TABBED_PANE, BorderLayout.CENTER);
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        gbc.anchor = GridBagConstraints.WEST;
+        gbc.weightx = 0;
+        gbc.fill = GridBagConstraints.NONE;
+        gbc.insets = JBUI.insets(2, 5, 0, 2);
+        mainPanel.add(refreshButton, gbc);
+
+        gbc.gridx = 1;
+        gbc.insets = JBUI.insets(2, 1, 0, 2);
+        mainPanel.add(settingsButton, gbc);
+
+        gbc.gridx = 0;
+        gbc.gridy = 1;
+        gbc.gridwidth = 2;
+        gbc.weightx = 1.0;
+        gbc.weighty = 1.0;
+        gbc.fill = GridBagConstraints.BOTH;
+        gbc.insets = JBUI.emptyInsets();
+        mainPanel.add(TABBED_PANE, gbc);
 
         //To react to resize events for the TIME_LINE
         mainPanel.addComponentListener(new ComponentAdapter() {
