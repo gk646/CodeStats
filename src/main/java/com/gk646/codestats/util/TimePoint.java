@@ -52,6 +52,29 @@ public final class TimePoint {
         this.string = string;
     }
 
+    public static List<TimePoint> generateMockTimePoints(int numPoints) {
+        Random rand = new Random();
+        List<TimePoint> mockPoints = new ArrayList<>();
+
+        for (int i = 0; i < numPoints*4; i++) {
+            TimePoint point = new TimePoint();
+
+            long randomMillisOffset = (long) i * TimePoint.MILLISEC_PER_DAY / 2;
+            point.timestamp = System.currentTimeMillis() - randomMillisOffset;
+
+            point.linesCode = 20000 + rand.nextInt(10000);
+
+            point.totalLines = 20000 + rand.nextInt(10000);
+
+            LocalDate date = Instant.ofEpochMilli(point.timestamp).atZone(ZoneId.systemDefault()).toLocalDate();
+            point.string = date.toString();
+
+            mockPoints.add(point);
+        }
+
+        return mockPoints;
+    }
+
     public long getX() {
         return timestamp;
     }
@@ -71,27 +94,5 @@ public final class TimePoint {
         } else {
             return string + "| Code Lines:" + linesCode;
         }
-    }
-    public static List<TimePoint> generateMockTimePoints(int numPoints) {
-        Random rand = new Random();
-        List<TimePoint> mockPoints = new ArrayList<>();
-
-        for (int i = 0; i < numPoints; i++) {
-            TimePoint point = new TimePoint();
-
-            long randomMillisOffset = (long) i * TimePoint.MILLISEC_PER_DAY;
-            point.timestamp = System.currentTimeMillis() - randomMillisOffset;
-
-            point.linesCode = 50 + rand.nextInt(450);
-
-            point.totalLines = 100 + rand.nextInt(900);
-
-            LocalDate date = Instant.ofEpochMilli(point.timestamp).atZone(ZoneId.systemDefault()).toLocalDate();
-            point.string = date.toString();
-
-            mockPoints.add(point);
-        }
-
-        return mockPoints;
     }
 }

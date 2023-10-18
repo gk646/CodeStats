@@ -200,7 +200,7 @@ public final class Parser {
             i++;
         }
 
-        Save.AddTimePoint(LineChartPanel.TimePointMode.GENERIC, new TimePoint(System.currentTimeMillis(), (int) footerData[0][10], (int) footerData[0][6], LocalDate.now().format(DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM).withLocale(Locale.getDefault()))));
+        Save.addTimePoint(LineChartPanel.TimePointMode.GENERIC, new TimePoint(System.currentTimeMillis(), (int) footerData[0][10], (int) footerData[0][6], LocalDate.now().format(DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM).withLocale(Locale.getDefault()))));
         String[] columnNames = {"Extension", "Count", "Size SUM", "Size MIN", "Size MAX", "Size AVG", "Lines", "Lines MIN", "Lines MAX", "Lines AVG", "Lines CODE"};
 
         var model = new DefaultTableModel(data, columnNames);
