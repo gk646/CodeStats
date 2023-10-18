@@ -206,8 +206,6 @@ public final class LineChartPanel extends JPanel {
             //Vertical Lines and X-Axis Labels
 
             int xTick = (int) ((dateMillis - minX) * scaleX + PADDING_LEFT);
-            System.out.println(dateMillis - minX);
-            System.out.println(scaleX);
 
             g2d.setColor(GRID_COLOR.brighter());
             g2d.drawLine(xTick, PADDING_TOP, xTick, getHeight() - PADDING_BOTTOM);
