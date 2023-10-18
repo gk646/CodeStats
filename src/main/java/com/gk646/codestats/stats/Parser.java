@@ -250,7 +250,7 @@ public final class Parser {
         CodeStatsWindow.TABBED_PANE.addTab("OverView", AllIcons.Nodes.HomeFolder, panel);
 
         //Adds the new timeline tab as the second tab
-        CodeStatsWindow.TABBED_PANE.addTab("TimeLine (Beta)", AllIcons.Nodes.PpLib, CodeStatsWindow.TIME_LINE);
+        CodeStatsWindow.TABBED_PANE.addTab("TimeLine", AllIcons.Nodes.PpLib, CodeStatsWindow.TIME_LINE);
 
         //build tabs
         for (var pair : tabs.entrySet()) {

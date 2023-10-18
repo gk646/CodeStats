@@ -76,7 +76,7 @@ public final class TimePoint {
         Random rand = new Random();
         List<TimePoint> mockPoints = new ArrayList<>();
 
-        for (int i = 0; i < numPoints * 4; i++) {
+        for (int i = 0; i < numPoints; i++) {
             TimePoint point = new TimePoint();
 
             long randomMillisOffset = (long) i * TimePoint.MILLISEC_PER_DAY / 2;
