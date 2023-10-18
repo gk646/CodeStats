@@ -25,7 +25,7 @@
 package com.gk646.codestats.stats;
 
 import com.gk646.codestats.CodeStatsWindow;
-import com.gk646.codestats.settings.Save;
+import com.gk646.codestats.settings.PersistentSave;
 import com.gk646.codestats.ui.LineChartPanel;
 import com.gk646.codestats.ui.UIHelper;
 import com.gk646.codestats.util.BoolContainer;
@@ -61,6 +61,7 @@ import java.nio.file.Path;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.time.LocalDate;
+import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.FormatStyle;
 import java.util.ArrayList;
@@ -70,6 +71,9 @@ import java.util.HashSet;
 import java.util.Locale;
 import java.util.stream.Stream;
 
+/**
+ * Handles all the parsing of source and non-source files
+ */
 @SuppressWarnings("DialogTitleCapitalization")
 public final class Parser {
     private static final HashSet<String> excludedTypes = new HashSet<>(16, 1);
@@ -79,6 +83,8 @@ public final class Parser {
     private static final HashMap<String, OverViewEntry> overView = new HashMap<>(10);
     private static final HashMap<String, ArrayList<StatEntry>> tabs = new HashMap<>(6);
     private final FileVisitor<Path> visitor;
+    public boolean commitHappened = false;
+    public String commitText;
     public Path projectPath;
     Charset charset = StandardCharsets.UTF_8;
 
@@ -108,7 +114,7 @@ public final class Parser {
     }
 
     public void updateState() {
-        var save = Save.getInstance();
+        var save = PersistentSave.getInstance();
         excludedTypes.clear();
         excludedDirs.clear();
         separateTabs.clear();
@@ -151,7 +157,7 @@ public final class Parser {
         charset = ParsingUtil.getCharsetFallback(save.charSet, StandardCharsets.UTF_8);
     }
 
-    public void updatePane() {
+    public void updatePane(boolean isSilentUpdate) {
         Task.Backgroundable task = new Task.Backgroundable(CodeStatsWindow.project, "Updating Code Stats", false) {
             @Override
             public void run(@NotNull ProgressIndicator indicator) {
@@ -160,6 +166,7 @@ public final class Parser {
                 iterateFiles();
                 ApplicationManager.getApplication().invokeLater(() -> {
                     rebuildTabbedPane();
+                    if (isSilentUpdate) return;
                     var duration = System.currentTimeMillis() - time;
                     var notification = new Notification("CodeStats", "Code Stats", "Update completed in " + String.format("%d", duration) + " ms.", NotificationType.INFORMATION);
                     notification.setIcon(AllIcons.General.Information);
@@ -199,8 +206,11 @@ public final class Parser {
             footerData[0][10] = (int) footerData[0][10] + entry.linesCode;
             i++;
         }
-
-        Save.addTimePoint(LineChartPanel.TimePointMode.GENERIC, new TimePoint(System.currentTimeMillis(), (int) footerData[0][10], (int) footerData[0][6], LocalDate.now().format(DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM).withLocale(Locale.getDefault()))));
+        if (commitHappened) {
+            PersistentSave.addTimePoint(LineChartPanel.TimePointMode.COMMIT, new TimePoint(ZonedDateTime.now().toInstant().toEpochMilli(), (int) footerData[0][10], (int) footerData[0][6], commitText));
+            commitHappened = false;
+        }
+        PersistentSave.addTimePoint(LineChartPanel.TimePointMode.GENERIC, new TimePoint(ZonedDateTime.now().toInstant().toEpochMilli(), (int) footerData[0][10], (int) footerData[0][6], LocalDate.now().format(DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM).withLocale(Locale.getDefault()))));
         String[] columnNames = {"Extension", "Count", "Size SUM", "Size MIN", "Size MAX", "Size AVG", "Lines", "Lines MIN", "Lines MAX", "Lines AVG", "Lines CODE"};
 
         var model = new DefaultTableModel(data, columnNames);
@@ -227,7 +237,7 @@ public final class Parser {
         //ui settings footer
         footer.setStriped(false);
         footer.setDefaultEditor(Object.class, null);
-        footer.setDefaultRenderer(Object.class, UIHelper.getBoldRendere());
+        footer.setDefaultRenderer(Object.class, UIHelper.getBoldRenderer());
 
         JPanel panel = new JPanel(new GridBagLayout());
         GridBagConstraints gbc = new GridBagConstraints();
@@ -240,7 +250,7 @@ public final class Parser {
         CodeStatsWindow.TABBED_PANE.addTab("OverView", AllIcons.Nodes.HomeFolder, panel);
 
         //Adds the new timeline tab as the second tab
-        CodeStatsWindow.TABBED_PANE.addTab("TimeLine", AllIcons.Nodes.PpLib, CodeStatsWindow.TIME_LINE);
+        CodeStatsWindow.TABBED_PANE.addTab("TimeLine (Beta)", AllIcons.Nodes.PpLib, CodeStatsWindow.TIME_LINE);
 
         //build tabs
         for (var pair : tabs.entrySet()) {
@@ -290,7 +300,7 @@ public final class Parser {
 
             //footer ui settings
             footer.setDefaultEditor(Object.class, null);
-            footer.setDefaultRenderer(Object.class, UIHelper.getBoldRendere());
+            footer.setDefaultRenderer(Object.class, UIHelper.getBoldRenderer());
             footer.setStriped(false);
 
 

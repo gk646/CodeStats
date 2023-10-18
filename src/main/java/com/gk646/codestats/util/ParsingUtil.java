@@ -24,6 +24,8 @@
 
 package com.gk646.codestats.util;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.nio.charset.Charset;
@@ -36,11 +38,10 @@ public final class ParsingUtil {
     private ParsingUtil() {
     }
 
-    public static String getFileExtension(String fileName) {
+    public static @NotNull String getFileExtension(@NotNull String fileName) {
         int dotIndex = fileName.lastIndexOf('.');
         return (dotIndex == -1) ? "" : fileName.substring(dotIndex + 1);
     }
-
     public static int parseLargeNonUTFFile(Path path) throws IOException {
         int lines = 0;
         BufferedInputStream bis = new BufferedInputStream(Files.newInputStream(path));
@@ -66,6 +67,7 @@ public final class ParsingUtil {
         }
         return lines;
     }
+
     public static Charset getCharsetFallback(String charsetName, Charset fallbackCharset) {
         try {
             return Charset.forName(charsetName);

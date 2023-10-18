@@ -24,8 +24,8 @@
 
 package com.gk646.codestats;
 
-import com.gk646.codestats.settings.Save;
-import com.gk646.codestats.settings.Settings;
+import com.gk646.codestats.settings.PersistentSave;
+import com.gk646.codestats.settings.SettingsPanel;
 import com.gk646.codestats.stats.Parser;
 import com.gk646.codestats.ui.LineChartPanel;
 import com.gk646.codestats.ui.UIHelper;
@@ -40,15 +40,12 @@ import com.intellij.openapi.wm.ToolWindowFactory;
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener;
 import com.intellij.ui.components.JBTabbedPane;
 import com.intellij.ui.content.ContentFactory;
-import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.JPanel;
 import javax.swing.JTabbedPane;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
-import java.awt.event.ComponentAdapter;
-import java.awt.event.ComponentEvent;
 import java.nio.file.Path;
 import java.util.Objects;
 
@@ -58,9 +55,24 @@ public final class CodeStatsWindow implements ToolWindowFactory, ToolWindowManag
     public static final Parser PARSER = new Parser();
     public static Project project;
 
+    /**
+     * Central update method to completely update CodeStats's toolwindow with the current project files.
+     * Clears old information, triggers a full parse over the source files and then builds the new tables.
+     * @param isSilentUpdate true if the update should not create a notification
+     */
+    public static void update(boolean isSilentUpdate) {
+        //TODO potentially no need to remove them / just reassign the tables / could get rid of visual reload delay
+        TABBED_PANE.removeAll();
+        PARSER.updatePane(isSilentUpdate);
+    }
+
+    /**
+     * Method is called on project startup <br>
+     * This is added as a safety layer to set essential variables to provide e.g. the CodeStats settings page.
+     * @param project a reference of the current project
+     */
     @Override
     public void runActivity(@NotNull Project project) {
-        //Added as safety layer // if ToolWindow isn't opened before the settings there is a null access
         PARSER.projectPath = Path.of(Objects.requireNonNull(project.getBasePath()));
         CodeStatsWindow.project = project;
     }
@@ -73,49 +85,15 @@ public final class CodeStatsWindow implements ToolWindowFactory, ToolWindowManag
         initUI(toolWindow, project);
     }
 
-    private void initUI(ToolWindow toolWindow, Project project) {
-        ActionButton refreshButton = UIHelper.createButton("Refresh", "Get CodeStats!", AllIcons.Actions.Refresh, this::update);
+    private void initUI(@NotNull ToolWindow toolWindow, Project project) {
+        ActionButton refreshButton = UIHelper.createButton("Refresh", "Get CodeStats!", AllIcons.Actions.Refresh, () -> CodeStatsWindow.update(true));
         ActionButton settingsButton = UIHelper.createButton("Settings", "Customize CodeStats!", AllIcons.General.GearPlain,
-                () -> ShowSettingsUtil.getInstance().showSettingsDialog(project, Settings.class));
+                () -> ShowSettingsUtil.getInstance().showSettingsDialog(project, SettingsPanel.class));
 
         JPanel mainPanel = new JPanel(new GridBagLayout());
         GridBagConstraints gbc = new GridBagConstraints();
 
-        gbc.gridx = 0;
-        gbc.gridy = 0;
-        gbc.anchor = GridBagConstraints.WEST;
-        gbc.weightx = 0;
-        gbc.fill = GridBagConstraints.NONE;
-        gbc.insets = JBUI.insets(2, 5, 0, 2);
-        mainPanel.add(refreshButton, gbc);
-
-        gbc.gridx = 1;
-        gbc.insets = JBUI.insets(2, 1, 0, 2);
-        mainPanel.add(settingsButton, gbc);
-
-        gbc.gridx = 0;
-        gbc.gridy = 1;
-        gbc.gridwidth = 2;
-        gbc.weightx = 1.0;
-        gbc.weighty = 1.0;
-        gbc.fill = GridBagConstraints.BOTH;
-        gbc.insets = JBUI.emptyInsets();
-        mainPanel.add(TABBED_PANE, gbc);
-
-        //To react to resize events for the TIME_LINE
-        mainPanel.addComponentListener(new ComponentAdapter() {
-            @Override
-            public void componentResized(ComponentEvent e) {
-                TIME_LINE.resizeTimer.restart();
-            }
-        });
-
-        TABBED_PANE.addChangeListener(e -> {
-            if (TABBED_PANE.getSelectedIndex() == 1) {
-                TIME_LINE.refreshGraphic = true;
-            }
-        });
-
+        UIHelper.createMainUI(gbc, refreshButton, settingsButton, mainPanel);
 
         var content = ContentFactory.getInstance().createContent(mainPanel, "CodeStats", true);
         toolWindow.getContentManager().addContent(content);
@@ -123,15 +101,8 @@ public final class CodeStatsWindow implements ToolWindowFactory, ToolWindowManag
 
     @Override
     public void toolWindowShown(@NotNull ToolWindow toolWindow) {
-        if ("CodeStats".equals(toolWindow.getId()) && !Save.getInstance().disableAutoUpdate) {
-            update();
+        if ("CodeStats".equals(toolWindow.getId()) && !PersistentSave.getInstance().disableAutoUpdate) {
+            update(false);
         }
-    }
-
-
-    public void update() {
-        //TODO potentially no need to remove them / just reassign the tables / could get rid of visual reload delay
-        TABBED_PANE.removeAll();
-        PARSER.updatePane();
     }
 }

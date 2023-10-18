@@ -96,10 +96,10 @@
     <extensions defaultExtensionNs="com.intellij">
         <toolWindow id="CodeStats" anchor="bottom" factoryClass="com.gk646.codestats.CodeStatsWindow" icon="icons/CodeStatsIcon.png"/>
         <applicationConfigurable id="CodeStatsConfigurable" displayName="Code Stats" groupId="tools"
-                                 instance="com.gk646.codestats.settings.Settings"/>
-        <projectService serviceImplementation="com.gk646.codestats.settings.Save"/>
+                                 instance="com.gk646.codestats.settings.SettingsPanel"/>
         <notificationGroup displayType="BALLOON" id="CodeStats" isLogByDefault="false"/>
         <postStartupActivity implementation="com.gk646.codestats.CodeStatsWindow"/>
+        <checkinHandlerFactory implementation="com.gk646.codestats.util.CommitHandlerFactory"/>
     </extensions>
 
     <projectListeners>

@@ -28,6 +28,7 @@ import com.gk646.codestats.CodeStatsWindow;
 import com.gk646.codestats.ui.LineChartPanel;
 import com.gk646.codestats.util.TimePoint;
 import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.Service;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.components.StoragePathMacros;
@@ -36,16 +37,21 @@ import com.intellij.util.xmlb.annotations.XCollection;
 import org.jetbrains.annotations.NotNull;
 
 import java.nio.charset.StandardCharsets;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.List;
 
+/**
+ * Handles saving and retrieving persistent data. Registered as a project specific component.
+ */
+@Service(Service.Level.PROJECT)
 @State(
         name = "com.gk646.codestats.settings.Save",
         storages = {@Storage(StoragePathMacros.WORKSPACE_FILE)}
 )
-public final class Save implements PersistentStateComponent<Save> {
+public final class PersistentSave implements PersistentStateComponent<PersistentSave> {
     private static final int MAX_SAVED_TIMEPOINTS = 200;
-    private static final int MAX_GENERIC_POINTS_PER_DAY = 2;
     public List<TimePoint> commitTimePoints = new ArrayList<>(15);
     public List<TimePoint> genericTimePoints = new ArrayList<>(15);
     public String excludedFileTypes = "wav;ttf;sql;tmp;dmp;ico;dat;svg;class;svn-base;svn-work;Extra;gif;png;jpg;mp3;jpeg;bmp;tga;tiff;ear;war;zip;jar;iml;iws;ipr;bz2;gz;pyc;rar";
@@ -61,8 +67,8 @@ public final class Save implements PersistentStateComponent<Save> {
 
     public List<String> excludedDirectories = new ArrayList<>();
 
-    public static Save getInstance() {
-        return CodeStatsWindow.project.getService(Save.class);
+    public static PersistentSave getInstance() {
+        return CodeStatsWindow.project.getService(PersistentSave.class);
     }
 
     public static void addTimePoint(LineChartPanel.TimePointMode mode, TimePoint point) {
@@ -77,28 +83,47 @@ public final class Save implements PersistentStateComponent<Save> {
         enforceSizeLimit(list);
     }
 
-    private static void enforceSizeLimit(List<TimePoint> points) {
+    private static void enforceSizeLimit(@NotNull List<TimePoint> points) {
         if (points.size() == MAX_SAVED_TIMEPOINTS) {
             points.remove(0);
         }
     }
 
-    private static void enforceGenericLimits(List<TimePoint> points) {
+    private static void enforceGenericLimits(@NotNull List<TimePoint> points) {
+        if (points.isEmpty()) return;
+
         var last = points.get(points.size() - 1);
 
-        if (System.currentTimeMillis() - last.timestamp < TimePoint.MILLISEC_PER_DAY / 2) {
+        if (isInSameHalfOfDay(ZonedDateTime.now().toInstant().toEpochMilli(), last.timestamp)) {
             points.remove(points.size() - 1);
         }
     }
 
-    @Override
+    private static boolean isInSameHalfOfDay(long time1, long time2) {
+        Calendar cal1 = Calendar.getInstance();
+        Calendar cal2 = (Calendar) cal1.clone();
+        cal1.setTimeInMillis(time1);
+        cal2.setTimeInMillis(time2);
 
-    public Save getState() {
+        int hour1 = cal1.get(Calendar.HOUR_OF_DAY);
+        int hour2 = cal2.get(Calendar.HOUR_OF_DAY);
+
+        return (hour1 < 12 && hour2 < 12) || (hour1 >= 12 && hour2 >= 12);
+    }
+
+    public static void clearPoints() {
+        var instance = PersistentSave.getInstance();
+        instance.commitTimePoints.clear();
+        instance.genericTimePoints.clear();
+    }
+
+    @Override
+    public PersistentSave getState() {
         return this;
     }
 
     @Override
-    public void loadState(@NotNull Save state) {
+    public void loadState(@NotNull PersistentSave state) {
         XmlSerializerUtil.copyBean(state, this);
     }
 }

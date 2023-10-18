@@ -24,6 +24,7 @@
 
 package com.gk646.codestats.ui;
 
+import com.gk646.codestats.CodeStatsWindow;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.ActionToolbar;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -31,12 +32,17 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.ui.JBColor;
+import com.intellij.ui.components.JBRadioButton;
+import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.BorderFactory;
+import javax.swing.ButtonGroup;
 import javax.swing.Icon;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
+import javax.swing.JPanel;
 import javax.swing.JTable;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableCellRenderer;
@@ -44,11 +50,12 @@ import javax.swing.table.TableModel;
 import javax.swing.table.TableRowSorter;
 import java.awt.Component;
 import java.awt.Font;
-import java.awt.FontMetrics;
-import java.awt.Graphics2D;
 import java.awt.GridBagConstraints;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
 import java.nio.charset.StandardCharsets;
 import java.util.Comparator;
+
 
 public final class UIHelper {
 
@@ -58,7 +65,9 @@ public final class UIHelper {
     private UIHelper() {
     }
 
-    public static TableCellRenderer getBoldRendere() {
+    @Contract(" -> new")
+    public static @NotNull TableCellRenderer getBoldRenderer() {
+        //TODO return only a reference
         return new DefaultTableCellRenderer() {
             @Override
             public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
@@ -72,7 +81,9 @@ public final class UIHelper {
         };
     }
 
-    public static DefaultTableCellRenderer getIconRenderer() {
+    @Contract(" -> new")
+    public static @NotNull DefaultTableCellRenderer getIconRenderer() {
+
         return new DefaultTableCellRenderer() {
             @Override
             public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
@@ -89,7 +100,8 @@ public final class UIHelper {
         };
     }
 
-    public static DefaultTableCellRenderer getSeparateTableCellRenderer() {
+    @Contract(" -> new")
+    public static @NotNull DefaultTableCellRenderer getSeparateTableCellRenderer() {
         return new DefaultTableCellRenderer() {
             @Override
             public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
@@ -104,7 +116,8 @@ public final class UIHelper {
         };
     }
 
-    public static TableRowSorter<TableModel> getOverViewTableSorter(TableRowSorter<TableModel> sorter) {
+    @Contract("_ -> param1")
+    public static @NotNull TableRowSorter<TableModel> getOverViewTableSorter(@NotNull TableRowSorter<TableModel> sorter) {
         sorter.setComparator(1, Comparator.comparingInt(a -> Integer.parseInt(((String) a).replace("x", ""))));
 
         sorter.setComparator(2, Comparator.comparingLong(a -> Long.parseLong(((String) a).replace("kb", "").replace(".", ""))));
@@ -120,7 +133,8 @@ public final class UIHelper {
         return sorter;
     }
 
-    public static TableRowSorter<TableModel> getSeparateTabTableSorter(TableRowSorter<TableModel> sorter) {
+    @Contract("_ -> param1")
+    public static @NotNull TableRowSorter<TableModel> getSeparateTabTableSorter(@NotNull TableRowSorter<TableModel> sorter) {
         sorter.setComparator(1, Comparator.comparingInt(a -> (Integer) a));
         sorter.setComparator(2, Comparator.comparingInt(a -> (Integer) a));
         sorter.setComparator(4, Comparator.comparingInt(a -> (Integer) a));
@@ -132,8 +146,8 @@ public final class UIHelper {
         return sorter;
     }
 
-
-    public static GridBagConstraints setMainTableConstraint(GridBagConstraints gbc) {
+    @Contract("_ -> param1")
+    public static @NotNull GridBagConstraints setMainTableConstraint(@NotNull GridBagConstraints gbc) {
         gbc.gridx = 0;
         gbc.gridy = 0;
         gbc.weightx = 1;
@@ -142,14 +156,15 @@ public final class UIHelper {
         return gbc;
     }
 
-    public static GridBagConstraints setFooterTableConstraint(GridBagConstraints gbc) {
+    @Contract("_ -> param1")
+    public static @NotNull GridBagConstraints setFooterTableConstraint(@NotNull GridBagConstraints gbc) {
         gbc.gridy = 1;
         gbc.weighty = 0;
         gbc.fill = GridBagConstraints.HORIZONTAL;
         return gbc;
     }
 
-    public static ComboBox<String> getCharsetMenu() {
+    public static @NotNull ComboBox<String> getCharsetMenu() {
         var comboBox = new ComboBox<String>();
         comboBox.addItem(String.valueOf(StandardCharsets.UTF_8));
         comboBox.addItem(String.valueOf(StandardCharsets.US_ASCII));
@@ -160,7 +175,7 @@ public final class UIHelper {
         return comboBox;
     }
 
-    public static ActionButton createButton(String text, String description, @NotNull Icon icon, Runnable action) {
+    public static @NotNull ActionButton createButton(String text, String description, @NotNull Icon icon, Runnable action) {
         var anAction = new AnAction(text, description, icon) {
             @Override
             public void actionPerformed(@NotNull AnActionEvent e) {
@@ -170,4 +185,94 @@ public final class UIHelper {
         return new ActionButton(anAction, anAction.getTemplatePresentation(), text, ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE);
     }
 
+    public static void createMainUI(@NotNull GridBagConstraints gbc, ActionButton refreshButton, ActionButton settingsButton, @NotNull JPanel mainPanel) {
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        gbc.anchor = GridBagConstraints.WEST;
+        gbc.weightx = 0;
+        gbc.fill = GridBagConstraints.NONE;
+        gbc.insets = JBUI.insets(2, 5, 0, 2);
+        mainPanel.add(refreshButton, gbc);
+
+        gbc.gridx = 1;
+        gbc.insets = JBUI.insets(2, 1, 0, 2);
+        mainPanel.add(settingsButton, gbc);
+
+        gbc.gridx = 0;
+        gbc.gridy = 1;
+        gbc.gridwidth = 2;
+        gbc.weightx = 1.0;
+        gbc.weighty = 1.0;
+        gbc.fill = GridBagConstraints.BOTH;
+        gbc.insets = JBUI.emptyInsets();
+        mainPanel.add(CodeStatsWindow.TABBED_PANE, gbc);
+
+        //To react to resize events for the TIME_LINE
+        mainPanel.addComponentListener(new ComponentAdapter() {
+            @Override
+            public void componentResized(ComponentEvent e) {
+                CodeStatsWindow.TIME_LINE.resizeTimer.restart();
+            }
+        });
+
+        CodeStatsWindow.TABBED_PANE.addChangeListener(e -> {
+            if (CodeStatsWindow.TABBED_PANE.getSelectedIndex() == 1) {
+                CodeStatsWindow.TIME_LINE.refreshGraphic = true;
+            }
+        });
+    }
+
+    public static void addTimeLineButtons(@NotNull LineChartPanel lineChartPanel, @NotNull JBRadioButton commitPoints, @NotNull JBRadioButton genericPoints, @NotNull JBRadioButton codeLines, @NotNull JBRadioButton totalLines) {
+        lineChartPanel.setLayout(null);
+        codeLines.setSelected(true);
+        genericPoints.setSelected(true);
+
+        codeLines.addActionListener(e -> {
+            lineChartPanel.lineMode = LineChartPanel.LineCountMode.CODE_LINES;
+            lineChartPanel.refreshChart();
+        });
+
+        totalLines.addActionListener(e -> {
+            lineChartPanel.lineMode = LineChartPanel.LineCountMode.TOTAL_LINES;
+            lineChartPanel.refreshChart();
+        });
+
+        commitPoints.addActionListener(e -> {
+            lineChartPanel.pointMode = LineChartPanel.TimePointMode.COMMIT;
+            lineChartPanel.refreshChart();
+        });
+
+        genericPoints.addActionListener(e -> {
+            lineChartPanel.pointMode = LineChartPanel.TimePointMode.GENERIC;
+            lineChartPanel.refreshChart();
+        });
+
+
+        ButtonGroup lineModeGroup = new ButtonGroup();
+        lineModeGroup.add(codeLines);
+        lineModeGroup.add(totalLines);
+
+        ButtonGroup pointModeGroup = new ButtonGroup();
+        pointModeGroup.add(commitPoints);
+        pointModeGroup.add(genericPoints);
+
+
+        JLabel lineTypeLabel = new JLabel("Y-Axis:");
+        lineTypeLabel.setBounds(10, 1, 70, 20);
+        lineChartPanel.add(lineTypeLabel);
+
+        codeLines.setBounds(70, 1, 107, 20);
+        totalLines.setBounds(180, 1, 115, 20);
+        lineChartPanel.add(codeLines);
+        lineChartPanel.add(totalLines);
+
+        JLabel pointTypeLabel = new JLabel("Data Points:");
+        pointTypeLabel.setBounds(340, 1, 110, 20);
+        lineChartPanel.add(pointTypeLabel);
+
+        commitPoints.setBounds(440, 1, 80, 20);
+        genericPoints.setBounds(522, 1, 90, 20);
+        lineChartPanel.add(commitPoints);
+        lineChartPanel.add(genericPoints);
+    }
 }
