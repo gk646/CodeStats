@@ -117,7 +117,7 @@ public final class LineChartPanel extends JPanel {
         Graphics2D offScreenGraphics = offScreenImage.createGraphics();
 
         if (pointMode == TimePointMode.GENERIC) {
-            renderChart(offScreenGraphics, PersistentSave.getInstance().genericTimePoints);
+            renderChart(offScreenGraphics, TimePoint.generateMockTimePoints(100));
         } else {
             renderChart(offScreenGraphics, PersistentSave.getInstance().commitTimePoints);
         }

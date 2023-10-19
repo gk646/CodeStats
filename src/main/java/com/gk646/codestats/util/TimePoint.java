@@ -32,6 +32,7 @@ import org.jetbrains.annotations.NotNull;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
@@ -73,18 +74,21 @@ public final class TimePoint {
      * @return
      */
     public static @NotNull List<TimePoint> generateMockTimePoints(int numPoints) {
-        Random rand = new Random();
         List<TimePoint> mockPoints = new ArrayList<>();
+
+
+        double a = -1;
+        double b = 25000.0 / numPoints;
+        double c = 0;
 
         for (int i = 0; i < numPoints; i++) {
             TimePoint point = new TimePoint();
 
-            long randomMillisOffset = (long) i * TimePoint.MILLISEC_PER_DAY / 2;
-            point.timestamp = System.currentTimeMillis() - randomMillisOffset;
+            long randomMillisOffset = (long) (numPoints - i) * TimePoint.MILLISEC_PER_DAY / 2;
+            point.timestamp = ZonedDateTime.now().toInstant().toEpochMilli() - randomMillisOffset;
 
-            point.linesCode = 20000 + rand.nextInt(10000);
-
-            point.totalLines = 20000 + rand.nextInt(10000);
+            point.linesCode = (int) (a * Math.pow(i, 2) + b * i + c);
+            point.totalLines = point.linesCode;
 
             LocalDate date = Instant.ofEpochMilli(point.timestamp).atZone(ZoneId.systemDefault()).toLocalDate();
             point.info = date.toString();
@@ -94,6 +98,7 @@ public final class TimePoint {
 
         return mockPoints;
     }
+
 
     public long getX() {
         return timestamp;
