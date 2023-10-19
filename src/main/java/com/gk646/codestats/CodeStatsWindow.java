@@ -86,7 +86,7 @@ public final class CodeStatsWindow implements ToolWindowFactory, ToolWindowManag
     }
 
     private void initUI(@NotNull ToolWindow toolWindow, Project project) {
-        ActionButton refreshButton = UIHelper.createButton("Refresh", "Get CodeStats!", AllIcons.Actions.Refresh, () -> CodeStatsWindow.update(true));
+        ActionButton refreshButton = UIHelper.createButton("Refresh", "Get CodeStats!", AllIcons.Actions.Refresh, () -> CodeStatsWindow.update(false));
         ActionButton settingsButton = UIHelper.createButton("Settings", "Customize CodeStats!", AllIcons.General.GearPlain,
                 () -> ShowSettingsUtil.getInstance().showSettingsDialog(project, SettingsPanel.class));
 

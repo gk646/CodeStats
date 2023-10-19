@@ -37,7 +37,14 @@ public final class OverViewEntry {
     int linesMax;
     int linesCode;
 
-    public void setValues(long size, int totalLines, int sourceCodeLines) {
+    /**
+     * As new files are parsed its stats are added to the overview tab at the correct position.
+     * E.g. a new .java file has been processed and its stats are added to the OverView tab:
+     * @param size fileSize in bytes
+     * @param totalLines
+     * @param sourceCodeLines
+     */
+    public void addValues(long size, int totalLines, int sourceCodeLines) {
         count++;
 
         sizeSum += size;
