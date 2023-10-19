@@ -33,15 +33,21 @@ import java.nio.charset.UnsupportedCharsetException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
+/**
+ * Utility class for to help with parsing
+ */
+
 public final class ParsingUtil {
 
     private ParsingUtil() {
+        //Utility class
     }
 
     public static @NotNull String getFileExtension(@NotNull String fileName) {
         int dotIndex = fileName.lastIndexOf('.');
         return (dotIndex == -1) ? "" : fileName.substring(dotIndex + 1);
     }
+
     public static int parseLargeNonUTFFile(Path path) throws IOException {
         int lines = 0;
         BufferedInputStream bis = new BufferedInputStream(Files.newInputStream(path));

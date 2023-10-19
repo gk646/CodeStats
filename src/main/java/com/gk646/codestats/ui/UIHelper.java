@@ -56,7 +56,9 @@ import java.awt.event.ComponentEvent;
 import java.nio.charset.StandardCharsets;
 import java.util.Comparator;
 
-
+/**
+ * Utility class for UI elements
+ */
 public final class UIHelper {
 
     public static final DefaultTableCellRenderer OverViewTableCellRenderer = getIconRenderer();

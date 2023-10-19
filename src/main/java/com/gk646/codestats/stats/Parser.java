@@ -71,8 +71,14 @@ import java.util.HashSet;
 import java.util.Locale;
 import java.util.stream.Stream;
 
+/*Might need a redesign
+Might be possible without a hashmap or any intermediary storage
+deletion of overview tab not necessary as it's always the first
+could create manual indices for the filetypes and use an array instead of a hashmap for the tabs
+ */
 /**
- * Handles all the parsing of source and non-source files
+ * Handles all the parsing of source and non-source files.
+ * Also, responsible currently for rebuilding the tables in {@link #rebuildTabbedPane()}
  */
 @SuppressWarnings("DialogTitleCapitalization")
 public final class Parser {
@@ -368,16 +374,14 @@ public final class Parser {
                 } catch (IOException ignored) {
                 }
             }
-
             //setting separate tab entry data
             entry.sourceCodeLines = entry.totalLines - entry.blankLines - entry.commentLines - entry.docLines;
 
             //setting over view entry data
-            overView.get(extension).setValues(size, entry.totalLines, entry.sourceCodeLines);
+            overView.get(extension).addValues(size, entry.totalLines, entry.sourceCodeLines);
 
             tabs.get(extension).add(entry);
         } else {
-
             int lines = 0;
             long size = 0;
             try {
@@ -391,7 +395,7 @@ public final class Parser {
             }
 
             //setting overview entry data
-            overView.get(extension).setValues(size, lines, 0);
+            overView.get(extension).addValues(size, lines, 0);
         }
     }
 
