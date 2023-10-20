@@ -26,6 +26,7 @@ package com.gk646.codestats.stats;
 
 import com.gk646.codestats.CodeStatsWindow;
 import com.gk646.codestats.settings.PersistentSave;
+import com.gk646.codestats.settings.SettingsPanel;
 import com.gk646.codestats.ui.LineChartPanel;
 import com.gk646.codestats.ui.UIHelper;
 import com.gk646.codestats.util.BoolContainer;
@@ -76,9 +77,11 @@ Might be possible without a hashmap or any intermediary storage
 deletion of overview tab not necessary as it's always the first
 could create manual indices for the filetypes and use an array instead of a hashmap for the tabs
  */
+
 /**
  * Handles all the parsing of source and non-source files.
- * Also, responsible currently for rebuilding the tables in {@link #rebuildTabbedPane()}
+ * Also, responsible currently for rebuilding the tables in {@link #rebuildTabbedPane()}. <br>
+ * This class is still quite messy.
  */
 @SuppressWarnings("DialogTitleCapitalization")
 public final class Parser {
@@ -212,12 +215,8 @@ public final class Parser {
             footerData[0][10] = (int) footerData[0][10] + entry.linesCode;
             i++;
         }
-        if (commitHappened) {
 
-            PersistentSave.addTimePoint(LineChartPanel.TimePointMode.COMMIT, new TimePoint(ZonedDateTime.now().toInstant().toEpochMilli(), (int) footerData[0][10], (int) footerData[0][6], commitText));
-            commitHappened = false;
-        }
-        PersistentSave.addTimePoint(LineChartPanel.TimePointMode.GENERIC, new TimePoint(ZonedDateTime.now().toInstant().toEpochMilli(), (int) footerData[0][10], (int) footerData[0][6], LocalDate.now().format(DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM).withLocale(Locale.getDefault()))));
+
         String[] columnNames = {"Extension", "Count", "Size SUM", "Size MIN", "Size MAX", "Size AVG", "Lines", "Lines MIN", "Lines MAX", "Lines AVG", "Lines CODE"};
 
         var model = new DefaultTableModel(data, columnNames);
@@ -256,8 +255,16 @@ public final class Parser {
         panel.add(footer, UIHelper.setFooterTableConstraint(gbc));
         CodeStatsWindow.TABBED_PANE.addTab("OverView", AllIcons.Nodes.HomeFolder, panel);
 
+
         //Adds the new timeline tab as the second tab
-        CodeStatsWindow.TABBED_PANE.addTab("TimeLine", AllIcons.Nodes.PpLib, CodeStatsWindow.TIME_LINE);
+        if (!SettingsPanel.disableTimeLine.isSelected()) {
+            if (commitHappened) {
+                PersistentSave.addTimePoint(LineChartPanel.TimePointMode.COMMIT, new TimePoint(ZonedDateTime.now().toInstant().toEpochMilli(), (int) footerData[0][10], (int) footerData[0][6], commitText));
+                commitHappened = false;
+            }
+            PersistentSave.addTimePoint(LineChartPanel.TimePointMode.GENERIC, new TimePoint(ZonedDateTime.now().toInstant().toEpochMilli(), (int) footerData[0][10], (int) footerData[0][6], LocalDate.now().format(DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM).withLocale(Locale.getDefault()))));
+            CodeStatsWindow.TABBED_PANE.addTab("TimeLine", AllIcons.Nodes.PpLib, CodeStatsWindow.TIME_LINE);
+        }
 
         //build tabs
         for (var pair : tabs.entrySet()) {
