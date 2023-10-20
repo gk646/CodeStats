@@ -23,12 +23,25 @@ CodeStats is an opensource statistics plugin for JetBrains IDE's with focus on a
 
 ### How it works
 
+#### TimeLine
 
+CodeStats always logs current values for its timepoints, even if settings for included folders or filetypes change between points.
 
-#### Components
+- **UI**:
+  - **Y-Axis Options**: Toggle between CODE lines and total lines of the project using the top buttons.
+  - **Data Points**: Choose between commit data points or generic ones.
+  - **X-Axis Scaling**: Scales according to the total time difference between the first and last data point. It may range from days, weeks, half-months to month intervals.
 
-All components are registered inside the `plugin.xml` like the tool window, listeners and settings menu.
-Saving and retrieving the configuration is all done automatically through the JetBrains `@State` annotation and ecosystem.
+- **Editing Points**:
+  - **Storage**: All CodeStats settings are project-specific and saved in the `.idea/workspace.xml` file.
+  - **Access**: Use `STR+F` inside the file and search for `CodeStats` to find each timepoint with its attributes and timestamp.
+  - **Timestamp Info**: The timestamp is in UNIX-millis based on your current time zone: `ZonedDateTime.now().toInstant().toEpochMilli()`.
+
+- **Generic Points**:
+  - CodeStats replaces the most recent point when opened, unless the new point is in a different half of the day from the last one. For example, opening at 11:59 AM and again at 12:01 PM results in two points. Otherwise, the previous point updates.
+
+- **Commit Points**:
+  - On each successful commit a CodeStats refreshes and creates a commit timepoint. This is done non-intrusive via `CheckinHandlerFactory`.
 
 
 #### Parsing
@@ -46,3 +59,8 @@ Such files get parsed based on their size to avoid a `OutOfMemoryException`. Fil
 
 **All types included in the separate tab settings are initially handled as source files in the chosen encoding (default UTF-8).**  
 Should there be an error converting them with this encoding the non-source file parsing is still applied as mentioned above.
+
+#### Components
+
+- **Registration**: Components like the tool window, listeners, and settings menu are registered in the `plugin.xml`.
+- **Configuration**: JetBrains' `@State` annotation and ecosystem automate saving and retrieving configurations.
