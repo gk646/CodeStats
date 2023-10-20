@@ -155,7 +155,7 @@ public final class Parser {
         }
         if (save.excludeGit) {
             excludedDirs.add(projectPath + File.separator + ".git");
-            excludedDirs.add(projectPath + File.separator + ".gitignore");
+            excludedDirs.add(projectPath + File.separator + "gitignore");
             excludedDirs.add(projectPath + File.separator + ".svn");
             excludedDirs.add(projectPath + File.separator + ".hg");
         }
@@ -213,6 +213,7 @@ public final class Parser {
             i++;
         }
         if (commitHappened) {
+
             PersistentSave.addTimePoint(LineChartPanel.TimePointMode.COMMIT, new TimePoint(ZonedDateTime.now().toInstant().toEpochMilli(), (int) footerData[0][10], (int) footerData[0][6], commitText));
             commitHappened = false;
         }

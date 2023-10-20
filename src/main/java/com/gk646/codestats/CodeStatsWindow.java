@@ -75,6 +75,7 @@ public final class CodeStatsWindow implements ToolWindowFactory, ToolWindowManag
     public void runActivity(@NotNull Project project) {
         PARSER.projectPath = Path.of(Objects.requireNonNull(project.getBasePath()));
         CodeStatsWindow.project = project;
+        PARSER.updateState();
     }
 
     @Override
