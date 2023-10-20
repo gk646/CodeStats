@@ -2,7 +2,7 @@
 <idea-plugin>
     <!-- Unique identifier of the plugin. It should be FQN. It cannot be changed between the plugin versions. -->
     <id>com.gk646.codeStats</id>
-    <version>1.5.0</version>
+    <version>1.5.1</version>
     <!-- Public plugin name should be written in Title Case.
          Guidelines: https://plugins.jetbrains.com/docs/marketplace/plugin-overview-page.html#plugin-name -->
     <name>CodeStats</name>
@@ -47,6 +47,13 @@
 
 ]]></description>
     <change-notes><![CDATA[
+     <h2>Release 1.5.1</h2>
+      <ul>
+        <li>Fixed bug where it saved wrong statistics when committing without opening the toolwindow first</li>
+        <li>Fixed .gitignore not being added as excluded type when the option is checked</li>
+        <li>Added an option to disable the TimeLine feature</li>
+      </ul>
+
     <h2>Release 1.5.0</h2>
     <p>Thank you for 1000 Downloads and many more to come!</p>
     <ul>

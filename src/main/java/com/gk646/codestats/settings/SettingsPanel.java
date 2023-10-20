@@ -62,6 +62,7 @@ public final class SettingsPanel implements Configurable {
     private static final JBCheckBox exclude_compiler = new JBCheckBox("Exclude npm dir (node_modules)");
     private static final JBCheckBox exclude_git = new JBCheckBox("Exclude VCS directories (.git|.svn|.hg)");
     private static final JBCheckBox disableAutomaticUpdate = new JBCheckBox("Disable automatic update when opening CodeStats");
+    public static final JBCheckBox disableTimeLine = new JBCheckBox("Disable TimeLine");
     private static final ComboBox<String> charsetMenu = UIHelper.getCharsetMenu();
 
     private DefaultListModel<String> excludedDirectoriesField;
@@ -93,7 +94,6 @@ public final class SettingsPanel implements Configurable {
         return wrapperPanel;
     }
 
-
     @Override
     public boolean isModified() {
         PersistentSave settings = PersistentSave.getInstance();
@@ -105,6 +105,7 @@ public final class SettingsPanel implements Configurable {
                 || exclude_compiler.isSelected() != settings.excludeCompiler
                 || exclude_git.isSelected() != settings.excludeGit
                 || disableAutomaticUpdate.isSelected() != settings.disableAutoUpdate
+                || disableTimeLine.isSelected() != settings.disableTimeLine
                 || !charsetMenu.getItemAt(charsetMenu.getSelectedIndex()).equals(settings.charSet)
                 || !Collections.list(excludedDirectoriesField.elements()).equals(settings.excludedDirectories);
     }
@@ -120,6 +121,7 @@ public final class SettingsPanel implements Configurable {
         exclude_compiler.setSelected(settings.excludeCompiler);
         exclude_git.setSelected(settings.excludeGit);
         disableAutomaticUpdate.setSelected(settings.disableAutoUpdate);
+        disableTimeLine.setSelected(settings.disableTimeLine);
 
         excludedDirectoriesField.clear();
         for (String dir : settings.excludedDirectories) {
@@ -145,6 +147,7 @@ public final class SettingsPanel implements Configurable {
         settings.excludeGit = exclude_git.isSelected();
         settings.disableAutoUpdate = disableAutomaticUpdate.isSelected();
         settings.charSet = charsetMenu.getItemAt(charsetMenu.getSelectedIndex());
+        settings.disableTimeLine = disableTimeLine.isSelected();
         CodeStatsWindow.PARSER.updateState();
     }
 
@@ -244,8 +247,16 @@ public final class SettingsPanel implements Configurable {
         constraints.gridx = 1;
         panel.add(charsetMenu, constraints);
     }
+
     private void addTimeLineSection(@NotNull JPanel panel, @NotNull GridBagConstraints constraints) {
+        constraints.gridy++;
+        constraints.gridx = 0;
+        JLabel timelineLabel = new JLabel("Timeline:");
+        panel.add(timelineLabel, constraints);
+
         JButton clearTimeLine = new JButton("Clear TimeLine!");
+        clearTimeLine.setPreferredSize(new Dimension(150, 25));
+
         clearTimeLine.addActionListener(e -> {
             String userInput = JOptionPane.showInputDialog(panel,
                     "To confirm clearing the timeline, please type 'reset':",
@@ -255,13 +266,17 @@ public final class SettingsPanel implements Configurable {
             if ("reset".equalsIgnoreCase(userInput)) {
                 PersistentSave.clearPoints();
                 JOptionPane.showMessageDialog(panel, "Timeline cleared!", "Success", JOptionPane.INFORMATION_MESSAGE);
-            } else if (userInput != null) { // null indicates cancel was pressed
+            } else if (userInput != null) {
                 JOptionPane.showMessageDialog(panel, "Invalid confirmation. Timeline was not cleared.", "Error", JOptionPane.ERROR_MESSAGE);
             }
         });
 
+
+        constraints.gridy++;
+        constraints.gridx = 1;
+        panel.add(disableTimeLine, constraints);
+
         constraints.gridy++;
         panel.add(clearTimeLine, constraints);
     }
-
 }

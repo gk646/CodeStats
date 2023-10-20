@@ -63,6 +63,7 @@ public final class PersistentSave implements PersistentStateComponent<Persistent
     public boolean excludeCompiler = true;
     public boolean excludeGit = true;
     public boolean disableAutoUpdate = false;
+    public boolean disableTimeLine = false;
     @XCollection(propertyElementName = "excludedDirs", elementTypes = String.class)
 
     public List<String> excludedDirectories = new ArrayList<>();
