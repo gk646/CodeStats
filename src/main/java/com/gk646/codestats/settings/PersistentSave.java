@@ -100,17 +100,24 @@ public final class PersistentSave implements PersistentStateComponent<Persistent
         }
     }
 
-    private static boolean isInSameHalfOfDay(long time1, long time2) {
+    private static boolean isInSameHalfOfDay(long currentTime, long pointTime) {
         Calendar cal1 = Calendar.getInstance();
         Calendar cal2 = (Calendar) cal1.clone();
-        cal1.setTimeInMillis(time1);
-        cal2.setTimeInMillis(time2);
+        cal1.setTimeInMillis(currentTime);
+        cal2.setTimeInMillis(pointTime);
 
         int hour1 = cal1.get(Calendar.HOUR_OF_DAY);
         int hour2 = cal2.get(Calendar.HOUR_OF_DAY);
 
-        return (hour1 < 12 && hour2 < 12) || (hour1 >= 12 && hour2 >= 12);
+        int day1 = cal1.get(Calendar.DAY_OF_YEAR);
+        int day2 = cal2.get(Calendar.DAY_OF_YEAR);
+
+        int year1 = cal1.get(Calendar.YEAR);
+        int year2 = cal2.get(Calendar.YEAR);
+
+        return (hour1 < 12 && hour2 < 12) || (hour1 >= 12 && hour2 >= 12) && day1 == day2 && year1 == year2;
     }
+
 
     public static void clearPoints() {
         var instance = PersistentSave.getInstance();
