@@ -49,8 +49,9 @@
     <change-notes><![CDATA[
      <h2>Release 1.5.1</h2>
       <ul>
-        <li>Fixed bug where it saved wrong statistics when committing without opening the toolwindow first</li>
-        <li>Fixed .gitignore not being added as excluded type when the option is checked</li>
+        <li>Bug Fix: Saved wrong statistics when committing without opening the toolwindow first</li>
+        <li>Bug Fix: Generic timepoints being falsely removed when being in the same day half regardless of date</li>
+        <li>Bug Fix: .gitignore not being added as excluded type when the option is checked</li>
         <li>Added an option to disable the TimeLine feature</li>
       </ul>
 
