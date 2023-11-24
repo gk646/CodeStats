@@ -45,8 +45,9 @@ import com.intellij.ui.table.JBTable;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.JPanel;
+import javax.swing.RowSorter;
 import javax.swing.table.DefaultTableModel;
-import javax.swing.table.TableModel;
+import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableRowSorter;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
@@ -61,6 +62,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.text.DecimalFormat;
+import java.text.DecimalFormatSymbols;
 import java.time.LocalDate;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
@@ -96,6 +99,10 @@ public final class Parser {
     public String commitText;
     public Path projectPath;
     Charset charset = StandardCharsets.UTF_8;
+    private DefaultTableModel overviewModel;
+    private DefaultTableModel footerModel;
+    private JBTable overviewTable;
+    private JBTable footerTable;
 
     public Parser() {
         visitor = new SimpleFileVisitor<>() {
@@ -120,6 +127,41 @@ public final class Parser {
                 return FileVisitResult.CONTINUE;
             }
         };
+        initializeOverviewTab();
+    }
+
+    private void initializeOverviewTab() {
+        String[] columnNames = {"Extension", "Count", "Size SUM", "Size MIN", "Size MAX", "Size AVG", "Lines", "Lines MIN", "Lines MAX", "Lines AVG", "Lines CODE"};
+        overviewModel = new DefaultTableModel(columnNames, 0);
+        overviewTable = new JBTable(overviewModel);
+        setupTable(overviewTable, UIHelper.OverViewTableCellRenderer, UIHelper.getOverViewTableSorter(new TableRowSorter<>(overviewModel)));
+
+        footerModel = new DefaultTableModel(new String[]{"", "", "", "", "", "", "", "", "", "", ""}, 1);
+        footerTable = new JBTable(footerModel);
+        setupFooter(footerTable);
+
+        JPanel panel = new JPanel(new GridBagLayout());
+        GridBagConstraints gbc = new GridBagConstraints();
+        panel.add(new JBScrollPane(overviewTable), UIHelper.setMainTableConstraint(gbc));
+        panel.add(footerTable, UIHelper.setFooterTableConstraint(gbc));
+
+        CodeStatsWindow.TABBED_PANE.addTab("OverView", AllIcons.Nodes.HomeFolder, panel);
+    }
+
+    private void setupTable(@NotNull JBTable table, TableCellRenderer renderer, RowSorter<? extends javax.swing.table.TableModel> sorter) {
+        table.setDefaultEditor(Object.class, null);
+        table.setEnableAntialiasing(true);
+        table.setStriped(false);
+        table.setBorder(null);
+        table.getTableHeader().setReorderingAllowed(false);
+        table.setDefaultRenderer(Object.class, renderer);
+        table.setRowSorter(sorter);
+    }
+
+    private void setupFooter(JBTable footer) {
+        footer.setStriped(false);
+        footer.setDefaultEditor(Object.class, null);
+        footer.setDefaultRenderer(Object.class, UIHelper.getBoldRenderer());
     }
 
     public void updateState() {
@@ -142,25 +184,47 @@ public final class Parser {
         }
 
         //checkbox options
-        if (save.excludeIdea) {
+        if (save.isExcludeIDE) {
             excludedDirs.add(projectPath + File.separator + ".idea");
+            excludedDirs.add(projectPath + File.separator + ".vs");
+            excludedDirs.add(projectPath + File.separator + ".settings");
+            excludedDirs.add(projectPath + File.separator + ".project");
+            excludedDirs.add(projectPath + File.separator + ".classpath");
         }
-        if (save.excludeNpm) {
+
+        if (save.isExcludeSpecifics) {
             excludedDirs.add(projectPath + File.separator + "node_modules");
+            excludedDirs.add(projectPath + File.separator + ".docker");
         }
 
         if (save.excludeCompiler) {
             excludedDirs.add(projectPath + File.separator + "out");
             excludedDirs.add(projectPath + File.separator + "build");
+            excludedDirs.add(projectPath + File.separator + ".gradle");
             excludedDirs.add(projectPath + File.separator + "target");
             excludedDirs.add(projectPath + File.separator + "cmake-build-debug");
             excludedDirs.add(projectPath + File.separator + "cmake-build-release");
+            excludedDirs.add(projectPath + File.separator + "dist");
+            excludedDirs.add(projectPath + File.separator + "bin");
         }
+
         if (save.excludeGit) {
             excludedDirs.add(projectPath + File.separator + ".git");
             excludedDirs.add(projectPath + File.separator + "gitignore");
             excludedDirs.add(projectPath + File.separator + ".svn");
             excludedDirs.add(projectPath + File.separator + ".hg");
+        }
+
+        if (save.isExcludeCache) {
+            excludedDirs.add(projectPath + File.separator + ".cache");
+            excludedDirs.add(projectPath + File.separator + "tmp");
+            excludedDirs.add(projectPath + File.separator + "temp");
+        }
+
+        if (save.isExcludePython) {
+            excludedDirs.add(projectPath + File.separator + "venv");
+            excludedDirs.add(projectPath + File.separator + "env");
+            excludedDirs.add(projectPath + File.separator + ".env");
         }
 
         charset = ParsingUtil.getCharsetFallback(save.charSet, StandardCharsets.UTF_8);
@@ -187,22 +251,28 @@ public final class Parser {
     }
 
     private void rebuildTabbedPane() {
-        Object[][] data = new Object[overView.size()][];
-        Object[][] footerData = new Object[][]{{"Total:", 0, 0L, 0L, 0L, 0L, 0, 0, 0, 0, 0}};
+        Locale germanLocale = Locale.GERMAN;
+        DecimalFormat df = new DecimalFormat("#,###kb", new DecimalFormatSymbols(germanLocale));
+
+        var data = new Object[overView.size()][];
+        var footerData = new Object[][]{{"Total:", 0, 0L, 0L, 0L, 0L, 0, 0, 0, 0, 0}};
         int i = 0;
         for (var pair : overView.entrySet()) {
             var entry = pair.getValue();
-            data[i] = new Object[]{pair.getKey(),
+            long sizeAvg = entry.sizeSum / entry.count / 1000;
+            data[i] = new Object[]{
+                    pair.getKey(),
                     entry.count + "x",
-                    String.format(Locale.GERMAN, "%,d", entry.sizeSum / 1000) + "kb",
-                    String.format(Locale.GERMAN, "%,d", entry.sizeMin / 1000) + "kb",
-                    String.format(Locale.GERMAN, "%,d", entry.sizeMax / 1000) + "kb",
-                    String.format(Locale.GERMAN, "%,d", (entry.sizeSum / entry.count) / 1000) + "kb",
+                    df.format(entry.sizeSum / 1000),
+                    df.format(entry.sizeMin / 1000),
+                    df.format(entry.sizeMax / 1000),
+                    df.format(sizeAvg),
                     entry.lines,
                     entry.linesMin,
                     entry.linesMax,
                     entry.lines / entry.count,
-                    entry.linesCode};
+                    entry.linesCode
+            };
             footerData[0][1] = (int) footerData[0][1] + entry.count;
             footerData[0][2] = (long) footerData[0][2] + entry.sizeSum / 1000;
             footerData[0][3] = (long) footerData[0][3] + entry.sizeMin / 1000;
@@ -216,119 +286,91 @@ public final class Parser {
             i++;
         }
 
-
-        String[] columnNames = {"Extension", "Count", "Size SUM", "Size MIN", "Size MAX", "Size AVG", "Lines", "Lines MIN", "Lines MAX", "Lines AVG", "Lines CODE"};
-
-        var model = new DefaultTableModel(data, columnNames);
-        var table = new JBTable(model);
-
-        //table ui settings
-        table.setDefaultEditor(Object.class, null);
-        table.setEnableAntialiasing(true);
-        table.setStriped(false);
-        table.setBorder(null);
-        table.getTableHeader().setReorderingAllowed(false);
-
-        //creating the sorting
-        TableRowSorter<TableModel> sorter = new TableRowSorter<>(model);
-        table.setRowSorter(UIHelper.getOverViewTableSorter(sorter));
-
-        //set table renderer
-        table.setDefaultRenderer(Object.class, UIHelper.OverViewTableCellRenderer);
-
-        //creating the footer
-        model = new DefaultTableModel(footerData, new String[]{"", "", "", "", "", "", "", "", "", "", ""});
-        var footer = new JBTable(model);
-
-        //ui settings footer
-        footer.setStriped(false);
-        footer.setDefaultEditor(Object.class, null);
-        footer.setDefaultRenderer(Object.class, UIHelper.getBoldRenderer());
-
-        JPanel panel = new JPanel(new GridBagLayout());
-        GridBagConstraints gbc = new GridBagConstraints();
-
-        // Add main table
-        panel.add(new JBScrollPane(table), UIHelper.setMainTableConstraint(gbc));
-
-        // Add footer table
-        panel.add(footer, UIHelper.setFooterTableConstraint(gbc));
-        CodeStatsWindow.TABBED_PANE.addTab("OverView", AllIcons.Nodes.HomeFolder, panel);
+        overviewModel.setDataVector(data, new String[]{"Extension", "Count", "Size SUM", "Size MIN", "Size MAX", "Size AVG", "Lines", "Lines MIN", "Lines MAX", "Lines AVG", "Lines CODE"});
+        setupTable(overviewTable, UIHelper.OverViewTableCellRenderer, UIHelper.getOverViewTableSorter(new TableRowSorter<>(overviewModel)));
+        footerModel.setDataVector(footerData, new String[]{"", "", "", "", "", "", "", "", "", "", ""});
 
 
         //Adds the new timeline tab as the second tab
+        handleTimelineTab((int) footerData[0][10], (int) footerData[0][6]);
+        //Build the separate tabs
+        buildSeparateTabs();
+    }
+
+    private void handleTimelineTab(int linesCode, int totalLines) {
         if (!SettingsPanel.disableTimeLine.isSelected()) {
+            long currentTimeMillis = ZonedDateTime.now().toInstant().toEpochMilli();
+
+            String formattedDate = LocalDate.now().format(DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM).withLocale(Locale.getDefault()));
+
             if (commitHappened) {
-                PersistentSave.addTimePoint(LineChartPanel.TimePointMode.COMMIT, new TimePoint(ZonedDateTime.now().toInstant().toEpochMilli(), (int) footerData[0][10], (int) footerData[0][6], commitText));
+                PersistentSave.addTimePoint(LineChartPanel.TimePointMode.COMMIT, new TimePoint(currentTimeMillis, linesCode, totalLines, commitText));
                 commitHappened = false;
             }
-            PersistentSave.addTimePoint(LineChartPanel.TimePointMode.GENERIC, new TimePoint(ZonedDateTime.now().toInstant().toEpochMilli(), (int) footerData[0][10], (int) footerData[0][6], LocalDate.now().format(DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM).withLocale(Locale.getDefault()))));
+            PersistentSave.addTimePoint(LineChartPanel.TimePointMode.GENERIC, new TimePoint(currentTimeMillis, linesCode, totalLines, formattedDate));
             CodeStatsWindow.TABBED_PANE.addTab("TimeLine", AllIcons.Nodes.PpLib, CodeStatsWindow.TIME_LINE);
         }
+    }
 
-        //build tabs
+    private void buildSeparateTabs() {
+        var columnNames = new String[]{"Source File", "Total Lines", "Source Code Lines", "Source Code Lines [%]", "Comment Lines", "Documentation Lines", "Blank Lines", "Blank Lines [%]"};
+
         for (var pair : tabs.entrySet()) {
             var fileList = pair.getValue();
-            if (fileList.isEmpty()) continue; //skip on empty separate tab type
+            if (fileList.isEmpty()) continue;
 
-            data = new Object[fileList.size()][];
-            footerData = new Object[][]{{"Total:", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}};
-            i = 0;
+            var data = new Object[fileList.size()][];
+            var footerTotals = new int[]{0, 0, 0, 0, 0}; // Total Lines, Source Code Lines, Comment Lines, Blank Lines
+            int i = 0;
+
             for (var entry : fileList) {
-                data[i] = new Object[]{entry.name, entry.totalLines, entry.sourceCodeLines, (int) (entry.sourceCodeLines * 100.0f / entry.totalLines + 0.5) + "%", entry.commentLines, entry.docLines, entry.blankLines, (int) (entry.blankLines * 100.0f / entry.totalLines + 0.5) + "%"};
-                footerData[0][1] = (int) footerData[0][1] + entry.totalLines;
-                footerData[0][2] = (int) footerData[0][2] + entry.sourceCodeLines;
-                footerData[0][3] = (int) footerData[0][3] + (int) (entry.sourceCodeLines * 100.0f / entry.totalLines + 0.5);
-                footerData[0][4] = (int) footerData[0][4] + entry.commentLines;
-                footerData[0][5] = (int) footerData[0][5] + entry.docLines;
-                footerData[0][6] = (int) footerData[0][6] + entry.blankLines;
-                footerData[0][7] = (int) footerData[0][7] + (int) (entry.blankLines * 100.0f / entry.totalLines + 0.5);
-                i++;
+                data[i++] = new Object[]{entry.name,
+                        entry.totalLines,
+                        entry.sourceCodeLines,
+                        (int) (entry.sourceCodeLines * 100.0f / entry.totalLines + 0.5) + "%",
+                        entry.commentLines,
+                        entry.docLines, entry.blankLines,
+                        (int) (entry.blankLines * 100.0f / entry.totalLines + 0.5) + "%"};
+
+                footerTotals[0] += entry.totalLines;
+                footerTotals[1] += entry.sourceCodeLines;
+                footerTotals[2] += entry.commentLines;
+                footerTotals[3] += entry.docLines;
+                footerTotals[4] += entry.blankLines;
             }
-            //get average percentage
-            footerData[0][3] = (int) footerData[0][3] / fileList.size();
-            footerData[0][7] = (int) footerData[0][7] / fileList.size();
 
+            var footerData = new Object[][]{
+                    {"Total:",
+                            footerTotals[0],
+                            footerTotals[1],
+                            String.format("%d%%",(int) (100 * (footerTotals[1]/(float)footerTotals[0]))),
+                            footerTotals[2],
+                            footerTotals[3],
+                            footerTotals[4],
+                            String.format("%d%%", (int) (100 * (footerTotals[4]/(float)footerTotals[0])))
+                    }
+            };
 
-            columnNames = new String[]{"Source File", "Total Lines", "Source Code Lines", "Source Code Lines [%]", "Comment Lines", "Documentation Lines", "Blank Lines", "Blank Lines [%]"};
-
-            model = new DefaultTableModel(data, columnNames);
-            table = new JBTable(model);
-
-            //main table ui settings
-            table.setDefaultEditor(Object.class, null);
-            table.setEnableAntialiasing(true);
-            table.setStriped(false);
-            table.setBorder(null);
-            table.getTableHeader().setReorderingAllowed(false);
-
-            //table sorter
-            sorter = new TableRowSorter<>(model);
-            table.setRowSorter(UIHelper.getSeparateTabTableSorter(sorter));
-
-            table.setDefaultRenderer(Object.class, UIHelper.SeparateTableCellRenderer);
-
-            //create footer
-            model = new DefaultTableModel(footerData, new String[]{"", "", "", "", "", "", "", ""});
-            footer = new JBTable(model);
-
-            //footer ui settings
-            footer.setDefaultEditor(Object.class, null);
-            footer.setDefaultRenderer(Object.class, UIHelper.getBoldRenderer());
-            footer.setStriped(false);
-
-
-            panel = new JPanel(new GridBagLayout());
-            gbc = new GridBagConstraints();
-
-            //Add main table
-            panel.add(new JBScrollPane(table), UIHelper.setMainTableConstraint(gbc));
-
-            //Add footer table
-            panel.add(footer, UIHelper.setFooterTableConstraint(gbc));
-            CodeStatsWindow.TABBED_PANE.addTab(pair.getKey(), AllIcons.General.ArrowSplitCenterH, panel);
+            createAndAddTab(pair.getKey(), data, footerData, columnNames);
         }
     }
+
+    private void createAndAddTab(String tabName, Object[][] data, Object[][] footerData, String[] columnNames) {
+        var tabTableModel = new DefaultTableModel(data, columnNames);
+        var table = new JBTable(tabTableModel);
+        setupTable(table, UIHelper.SeparateTableCellRenderer, UIHelper.getSeparateTabTableSorter(new TableRowSorter<>(tabTableModel)));
+
+        var tabFooterModel = new DefaultTableModel(footerData, new String[]{"", "", "", "", "", "", "", ""});
+        var tabFooterTable = new JBTable(tabFooterModel);
+        setupFooter(tabFooterTable);
+
+        var panel = new JPanel(new GridBagLayout());
+        var gbc = new GridBagConstraints();
+        panel.add(new JBScrollPane(table), UIHelper.setMainTableConstraint(gbc));
+        panel.add(tabFooterTable, UIHelper.setFooterTableConstraint(gbc));
+        CodeStatsWindow.TABBED_PANE.addTab(tabName, AllIcons.General.ArrowSplitCenterH, panel);
+    }
+
 
     private void parseFile(Path path, String extension) {
         overView.computeIfAbsent(extension, k -> new OverViewEntry());

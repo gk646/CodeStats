@@ -54,15 +54,18 @@ import java.awt.GridBagLayout;
 import java.util.Collections;
 
 public final class SettingsPanel implements Configurable {
-    private static final JBCheckBox exclude_idea = new JBCheckBox("Exclude IDE configuration directories (.idea)");
+    public static final JBCheckBox disableTimeLine = new JBCheckBox("Disable TimeLine");
+
     private static final JBTextField excludedFileTypesField = new JBTextField(10);
     private static final JBTextField includedFileTypesField = new JBTextField(10);
     private static final JBTextField separateTabsField = new JBTextField(10);
-    private static final JBCheckBox exclude_npm = new JBCheckBox("Exclude compiler output dir (out|target|build|cmake)");
-    private static final JBCheckBox exclude_compiler = new JBCheckBox("Exclude npm dir (node_modules)");
-    private static final JBCheckBox exclude_git = new JBCheckBox("Exclude VCS directories (.git|.svn|.hg)");
+    private static final JBCheckBox exclude_idea = new JBCheckBox("Exclude IDE configuration directories (.idea|.vs|.project)");
+    private static final JBCheckBox exclude_npm = new JBCheckBox("Exclude specific (node_modules|.docker)");
+    private static final JBCheckBox exclude_compiler = new JBCheckBox("Exclude build and compiler output (out|target|build|cmake|dist|bin|.gradle)");
+    private static final JBCheckBox exclude_cache = new JBCheckBox("Exclude cache and temporary (.cache|tmp|temp)");
+    private static final JBCheckBox exclude_python = new JBCheckBox("Exclude python and environment (venv|env|.env)");
+    private static final JBCheckBox excludeVCS = new JBCheckBox("Exclude VCS directories (.git|.svn|.hg)");
     private static final JBCheckBox disableAutomaticUpdate = new JBCheckBox("Disable automatic update when opening CodeStats");
-    public static final JBCheckBox disableTimeLine = new JBCheckBox("Disable TimeLine");
     private static final ComboBox<String> charsetMenu = UIHelper.getCharsetMenu();
 
     private DefaultListModel<String> excludedDirectoriesField;
@@ -100,10 +103,14 @@ public final class SettingsPanel implements Configurable {
         return !excludedFileTypesField.getText().equals(settings.excludedFileTypes)
                 || !includedFileTypesField.getText().equals(settings.includedFileTypes)
                 || !separateTabsField.getText().equals(settings.separateTabsTypes)
-                || exclude_idea.isSelected() != settings.excludeIdea
-                || exclude_npm.isSelected() != settings.excludeNpm
+                || exclude_idea.isSelected() != settings.isExcludeIDE
+                || exclude_npm.isSelected() != settings.isExcludeSpecifics
+
+                || exclude_python.isSelected() != settings.isExcludePython
+                || exclude_cache.isSelected() != settings.isExcludeCache
+
                 || exclude_compiler.isSelected() != settings.excludeCompiler
-                || exclude_git.isSelected() != settings.excludeGit
+                || excludeVCS.isSelected() != settings.excludeGit
                 || disableAutomaticUpdate.isSelected() != settings.disableAutoUpdate
                 || disableTimeLine.isSelected() != settings.disableTimeLine
                 || !charsetMenu.getItemAt(charsetMenu.getSelectedIndex()).equals(settings.charSet)
@@ -116,12 +123,14 @@ public final class SettingsPanel implements Configurable {
         excludedFileTypesField.setText(settings.excludedFileTypes);
         includedFileTypesField.setText(settings.includedFileTypes);
         separateTabsField.setText(settings.separateTabsTypes);
-        exclude_idea.setSelected(settings.excludeIdea);
-        exclude_npm.setSelected(settings.excludeNpm);
+        exclude_idea.setSelected(settings.isExcludeIDE);
+        exclude_npm.setSelected(settings.isExcludeSpecifics);
         exclude_compiler.setSelected(settings.excludeCompiler);
-        exclude_git.setSelected(settings.excludeGit);
+        excludeVCS.setSelected(settings.excludeGit);
         disableAutomaticUpdate.setSelected(settings.disableAutoUpdate);
         disableTimeLine.setSelected(settings.disableTimeLine);
+        exclude_cache.setSelected(settings.isExcludeCache);
+        exclude_python.setSelected(settings.isExcludePython);
 
         excludedDirectoriesField.clear();
         for (String dir : settings.excludedDirectories) {
@@ -141,13 +150,17 @@ public final class SettingsPanel implements Configurable {
         settings.excludedFileTypes = excludedFileTypesField.getText();
         settings.includedFileTypes = includedFileTypesField.getText();
         settings.separateTabsTypes = separateTabsField.getText();
-        settings.excludeIdea = exclude_idea.isSelected();
-        settings.excludeNpm = exclude_npm.isSelected();
+        settings.isExcludeIDE = exclude_idea.isSelected();
+        settings.isExcludeSpecifics = exclude_npm.isSelected();
+        settings.isExcludePython = exclude_python.isSelected();
+        settings.isExcludeCache = exclude_cache.isSelected();
         settings.excludeCompiler = exclude_compiler.isSelected();
-        settings.excludeGit = exclude_git.isSelected();
+        settings.excludeGit = excludeVCS.isSelected();
         settings.disableAutoUpdate = disableAutomaticUpdate.isSelected();
         settings.charSet = charsetMenu.getItemAt(charsetMenu.getSelectedIndex());
         settings.disableTimeLine = disableTimeLine.isSelected();
+
+
         CodeStatsWindow.PARSER.updateState();
     }
 
@@ -235,7 +248,13 @@ public final class SettingsPanel implements Configurable {
         panel.add(exclude_npm, constraints);
 
         constraints.gridy++;
-        panel.add(exclude_git, constraints);
+        panel.add(excludeVCS, constraints);
+
+        constraints.gridy++;
+        panel.add(exclude_cache, constraints);
+
+        constraints.gridy++;
+        panel.add(exclude_python, constraints);
     }
 
     private void addCharsetSection(@NotNull JPanel panel, @NotNull GridBagConstraints constraints) {

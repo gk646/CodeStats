@@ -61,11 +61,12 @@ public final class CodeStatsWindow implements ToolWindowFactory, ToolWindowManag
      * @param isSilentUpdate true if the update should not create a notification
      */
     public static void update(boolean isSilentUpdate) {
-        //TODO potentially no need to remove them / just reassign the tables / could get rid of visual reload delay
-        TABBED_PANE.removeAll();
+        int tabCount = TABBED_PANE.getTabCount();
+        for (int i = tabCount - 1; i > 0; i--) {
+            TABBED_PANE.remove(i);
+        }
         PARSER.updatePane(isSilentUpdate);
     }
-
     /**
      * Method is called on project startup <br>
      * This is added as a safety layer to set essential variables to provide e.g. the CodeStats settings page.

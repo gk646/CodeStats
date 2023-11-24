@@ -53,7 +53,6 @@ import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 /**
  * A component that uses only AWT or SWING elements to render a dynamic line chart.
@@ -117,7 +116,7 @@ public final class LineChartPanel extends JPanel {
         Graphics2D offScreenGraphics = offScreenImage.createGraphics();
 
         if (pointMode == TimePointMode.GENERIC) {
-            renderChart(offScreenGraphics,  PersistentSave.getInstance().genericTimePoints);
+            renderChart(offScreenGraphics, PersistentSave.getInstance().genericTimePoints);
         } else {
             renderChart(offScreenGraphics, PersistentSave.getInstance().commitTimePoints);
         }
@@ -182,6 +181,7 @@ public final class LineChartPanel extends JPanel {
         long daysBetween = ChronoUnit.DAYS.between(minDate, maxDate);
         long idealIncrement = daysBetween / 6;
         long dateIncrement;
+        int increments;
         if (idealIncrement <= 1) {
             dateIncrement = 1;
         } else if (idealIncrement <= 3) {
@@ -193,9 +193,10 @@ public final class LineChartPanel extends JPanel {
         } else {
             dateIncrement = 30;
         }
+        increments = (int) (daysBetween / dateIncrement);
         LocalDate currentXTickDate = minDate;
         var fm = g2d.getFontMetrics();
-        for (int i = 0; i < 6; i++) {
+        for (int i = 0; i < increments; i++) {
             long dateMillis;
             if (i == 0) {
                 dateMillis = minX;
