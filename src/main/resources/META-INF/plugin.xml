@@ -2,7 +2,7 @@
 <idea-plugin>
     <!-- Unique identifier of the plugin. It should be FQN. It cannot be changed between the plugin versions. -->
     <id>com.gk646.codeStats</id>
-    <version>1.5.1</version>
+    <version>1.5.2</version>
     <!-- Public plugin name should be written in Title Case.
          Guidelines: https://plugins.jetbrains.com/docs/marketplace/plugin-overview-page.html#plugin-name -->
     <name>CodeStats</name>
@@ -47,6 +47,17 @@
 
 ]]></description>
     <change-notes><![CDATA[
+     <h2>Release 1.5.2</h2>
+      <p>Thank you for 2000 Downloads and many more to come!</p>
+      <ul>
+        <li>Bug Fix: Fixed settings buttons having wrong names</li>
+        <li>Performance: Improved general performance by ~20% and improved visuals when reloading</li>
+        <li>Added more exclusion options to the settings panel</li>
+        <li>Improved naming and expanded existing exclusion options</li>
+        <li>Improved the X-Axis scaling of the timeline. Now shows better reference points</li>
+      </ul>
+
+
      <h2>Release 1.5.1</h2>
       <ul>
         <li>Bug Fix: Saved wrong statistics when committing without opening the toolwindow first</li>
