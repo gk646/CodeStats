@@ -73,6 +73,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Locale;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Stream;
 
 /*Might need a redesign
@@ -95,6 +96,7 @@ public final class Parser {
     private static final HashMap<String, OverViewEntry> overView = new HashMap<>(10);
     private static final HashMap<String, ArrayList<StatEntry>> tabs = new HashMap<>(6);
     private final FileVisitor<Path> visitor;
+    public AtomicBoolean isUpdating = new AtomicBoolean(false);
     public boolean commitHappened = false;
     public String commitText;
     public Path projectPath;
@@ -158,7 +160,7 @@ public final class Parser {
         table.setRowSorter(sorter);
     }
 
-    private void setupFooter(JBTable footer) {
+    private void setupFooter(@NotNull JBTable footer) {
         footer.setStriped(false);
         footer.setDefaultEditor(Object.class, null);
         footer.setDefaultRenderer(Object.class, UIHelper.getBoldRenderer());
@@ -239,6 +241,7 @@ public final class Parser {
                 iterateFiles();
                 ApplicationManager.getApplication().invokeLater(() -> {
                     rebuildTabbedPane();
+                    isUpdating.set(false);
                     if (isSilentUpdate) return;
                     var duration = System.currentTimeMillis() - time;
                     var notification = new Notification("CodeStats", "Code Stats", "Update completed in " + String.format("%d", duration) + " ms.", NotificationType.INFORMATION);
@@ -343,11 +346,11 @@ public final class Parser {
                     {"Total:",
                             footerTotals[0],
                             footerTotals[1],
-                            String.format("%d%%",(int) (100 * (footerTotals[1]/(float)footerTotals[0]))),
+                            String.format("%d%%", (int) (100 * (footerTotals[1] / (float) footerTotals[0]))),
                             footerTotals[2],
                             footerTotals[3],
                             footerTotals[4],
-                            String.format("%d%%", (int) (100 * (footerTotals[4]/(float)footerTotals[0])))
+                            String.format("%d%%", (int) (100 * (footerTotals[4] / (float) footerTotals[0])))
                     }
             };
 
@@ -370,7 +373,6 @@ public final class Parser {
         panel.add(tabFooterTable, UIHelper.setFooterTableConstraint(gbc));
         CodeStatsWindow.TABBED_PANE.addTab(tabName, AllIcons.General.ArrowSplitCenterH, panel);
     }
-
 
     private void parseFile(Path path, String extension) {
         overView.computeIfAbsent(extension, k -> new OverViewEntry());
