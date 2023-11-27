@@ -58,18 +58,23 @@ public final class CodeStatsWindow implements ToolWindowFactory, ToolWindowManag
     /**
      * Central update method to completely update CodeStats's toolwindow with the current project files.
      * Clears old information, triggers a full parse over the source files and then builds the new tables.
+     *
      * @param isSilentUpdate true if the update should not create a notification
      */
     public static void update(boolean isSilentUpdate) {
+        if (PARSER.isUpdating.get()) return;
+        PARSER.isUpdating.set(true);
         int tabCount = TABBED_PANE.getTabCount();
         for (int i = tabCount - 1; i > 0; i--) {
             TABBED_PANE.remove(i);
         }
         PARSER.updatePane(isSilentUpdate);
     }
+
     /**
      * Method is called on project startup <br>
      * This is added as a safety layer to set essential variables to provide e.g. the CodeStats settings page.
+     *
      * @param project a reference of the current project
      */
     @Override
