@@ -181,7 +181,6 @@ public final class LineChartPanel extends JPanel {
         long daysBetween = ChronoUnit.DAYS.between(minDate, maxDate);
         long idealIncrement = daysBetween / 6;
         long dateIncrement;
-        int increments;
         if (idealIncrement <= 1) {
             dateIncrement = 1;
         } else if (idealIncrement <= 3) {
@@ -193,19 +192,11 @@ public final class LineChartPanel extends JPanel {
         } else {
             dateIncrement = 30;
         }
-        increments = (int) (daysBetween / dateIncrement);
-        LocalDate currentXTickDate = minDate;
         var fm = g2d.getFontMetrics();
-        for (int i = 0; i < increments; i++) {
-            long dateMillis;
-            if (i == 0) {
-                dateMillis = minX;
-            } else {
-                currentXTickDate = minDate.plusDays(i * dateIncrement);
-                dateMillis = currentXTickDate.atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli();
-            }
-            //Vertical Lines and X-Axis Labels
 
+        // Draw vertical lines
+        for (LocalDate date = minDate; !date.isAfter(maxDate); date = date.plusDays(dateIncrement)) {
+            long dateMillis = date.atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli();
             int xTick = (int) ((dateMillis - minX) * scaleX + PADDING_LEFT);
 
             g2d.setColor(GRID_COLOR.brighter());
@@ -214,27 +205,26 @@ public final class LineChartPanel extends JPanel {
             g2d.setColor(AXIS_COLOR);
             g2d.drawLine(xTick, getHeight() - PADDING_BOTTOM - TICK_SIZE, xTick, getHeight() - PADDING_BOTTOM + TICK_SIZE);
 
-            String dateString = currentXTickDate.toString();
-            Rectangle2D stringBounds = g2d.getFontMetrics().getStringBounds(dateString, g2d);
-            if (i == 0) {
-                g2d.drawString(dateString, xTick, getHeight() - PADDING_BOTTOM + 17);
-            } else {
-                g2d.drawString(dateString, (int) (xTick - stringBounds.getWidth() / 2), getHeight() - PADDING_BOTTOM + 17);
-            }
+            String dateString = date.toString();
+            Rectangle2D stringBounds = fm.getStringBounds(dateString, g2d);
+            g2d.drawString(dateString, (int) (xTick - stringBounds.getWidth() / 2), getHeight() - PADDING_BOTTOM + 17);
+        }
 
-            //Horizontal Lines and Y-Axis labels
+        // Draw horizontal lines
+        for (int i = 0; i <= 6; i++) {
             int yTick = (int) (getHeight() - PADDING_BOTTOM - (intervalY * i) * scaleY);
 
             g2d.setColor(GRID_COLOR.brighter());
             g2d.drawLine(PADDING_LEFT, yTick, getWidth() - PADDING_RIGHT, yTick);
 
-
             g2d.setColor(AXIS_COLOR);
             g2d.drawLine(PADDING_LEFT - TICK_SIZE, yTick, PADDING_LEFT + TICK_SIZE, yTick);
+
             var s = String.valueOf(intervalY * i);
             g2d.drawString(s, PADDING_LEFT - 7 - fm.stringWidth(s), yTick + 5);
         }
     }
+
 
     private void drawTimePoints(@NotNull Graphics2D g2d, @NotNull List<TimePoint> points, long minX, double scaleX, double scaleY) {
         BasicStroke lineStroke = new BasicStroke(2f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND);
