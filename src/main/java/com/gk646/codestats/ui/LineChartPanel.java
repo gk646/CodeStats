@@ -194,9 +194,14 @@ public final class LineChartPanel extends JPanel {
         }
         var fm = g2d.getFontMetrics();
 
+        boolean once = false;
         // Draw vertical lines
         for (LocalDate date = minDate; !date.isAfter(maxDate); date = date.plusDays(dateIncrement)) {
             long dateMillis = date.atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli();
+            if (!once) {
+                dateMillis = minX;
+                once = true;
+            }
             int xTick = (int) ((dateMillis - minX) * scaleX + PADDING_LEFT);
 
             g2d.setColor(GRID_COLOR.brighter());
