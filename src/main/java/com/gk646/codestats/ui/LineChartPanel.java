@@ -28,6 +28,7 @@ import com.gk646.codestats.settings.PersistentSave;
 import com.gk646.codestats.util.TimePoint;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.ui.JBColor;
+import com.intellij.ui.JreHiDpiUtil;
 import com.intellij.ui.components.JBRadioButton;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -111,9 +112,13 @@ public final class LineChartPanel extends JPanel {
      * Additionally, triggers a {@link #repaint()} to redraw the JPanel on a top-level.
      */
     public void refreshChart() {
-        offScreenImage = UIUtil.createImage(this, getWidth(), getHeight(), BufferedImage.TYPE_INT_ARGB);
+        offScreenImage = new BufferedImage(getWidth(), getHeight(), BufferedImage.TYPE_INT_ARGB);
 
         Graphics2D offScreenGraphics = offScreenImage.createGraphics();
+
+        if(JreHiDpiUtil.isJreHiDPI(offScreenGraphics)){
+            System.out.println("hey");
+        }
 
         if (pointMode == TimePointMode.GENERIC) {
             renderChart(offScreenGraphics, PersistentSave.getInstance().genericTimePoints);
@@ -128,6 +133,7 @@ public final class LineChartPanel extends JPanel {
     private void renderChart(@NotNull Graphics2D g2d, @NotNull List<TimePoint> points) {
         g2d.setFont(AXIS_FONT);
         g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+
         boolean empty = points.isEmpty();
 
         long minX = empty ? ZonedDateTime.now().toInstant().toEpochMilli() : Long.MAX_VALUE;
@@ -216,7 +222,7 @@ public final class LineChartPanel extends JPanel {
         }
 
         // Draw horizontal lines
-        for (int i = 0; i <= 6; i++) {
+        for (int i = 0; i <= 5; i++) {
             int yTick = (int) (getHeight() - PADDING_BOTTOM - (intervalY * i) * scaleY);
 
             g2d.setColor(GRID_COLOR.brighter());
