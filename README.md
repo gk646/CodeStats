@@ -1,7 +1,9 @@
+![Maintained](https://img.shields.io/badge/maintained-yes-green.svg)
 ![Downloads](https://img.shields.io/jetbrains/plugin/d/22328-codestats)
 ![Version](https://img.shields.io/jetbrains/plugin/v/22328-codestats)
 ![Rating](https://img.shields.io/jetbrains/plugin/r/rating/22328-codestats)
 [![JetBrains IntelliJ Platform SDK Docs](https://jb.gg/badges/docs.svg)](https://plugins.jetbrains.com/docs/intellij)
+
 
 ## Code Stats
 
