@@ -1,4 +1,4 @@
-The codestats plugin is meant as a easy to use plugin to show statistic centered around written code.
+The codestats plugin is meant as an easy to use plugin for JetBrains IDE's to show statistic centered around written code.
 
 The main focus of this plugin is:
   - Efficiency and Speed
