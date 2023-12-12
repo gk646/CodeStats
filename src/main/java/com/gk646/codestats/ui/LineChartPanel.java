@@ -28,11 +28,11 @@ import com.gk646.codestats.settings.PersistentSave;
 import com.gk646.codestats.util.TimePoint;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.ui.JBColor;
-import com.intellij.ui.JreHiDpiUtil;
 import com.intellij.ui.components.JBRadioButton;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.ui.scale.JBUIScale;
 import org.jetbrains.annotations.NotNull;
 
+import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTabbedPane;
 import javax.swing.Timer;
@@ -82,10 +82,13 @@ public final class LineChartPanel extends JPanel {
     private static final JBRadioButton genericPoints = new JBRadioButton("Generic");
     private static final JBRadioButton commitPoints = new JBRadioButton("Commits");
     public final Timer resizeTimer;
+    final int[] BUTTON_WIDTHS = new int[6];
     private final ChartMouseMotionListener chartMouseListener = new ChartMouseMotionListener();
     public TimePointMode pointMode = TimePointMode.GENERIC;
     public LineCountMode lineMode = LineCountMode.CODE_LINES;
     public boolean refreshGraphic = true;
+    JLabel lineTypeLabel = new JLabel("Y-Axis:");
+    JLabel pointTypeLabel = new JLabel("Data Points:");
     private BufferedImage offScreenImage;
 
     public LineChartPanel(JTabbedPane pane) {
@@ -112,13 +115,11 @@ public final class LineChartPanel extends JPanel {
      * Additionally, triggers a {@link #repaint()} to redraw the JPanel on a top-level.
      */
     public void refreshChart() {
+        scaleTextBoxes();
         offScreenImage = new BufferedImage(getWidth(), getHeight(), BufferedImage.TYPE_INT_ARGB);
 
         Graphics2D offScreenGraphics = offScreenImage.createGraphics();
 
-        if(JreHiDpiUtil.isJreHiDPI(offScreenGraphics)){
-            System.out.println("hey");
-        }
 
         if (pointMode == TimePointMode.GENERIC) {
             renderChart(offScreenGraphics, PersistentSave.getInstance().genericTimePoints);
@@ -254,6 +255,20 @@ public final class LineChartPanel extends JPanel {
         int xLast = (int) ((points.get(points.size() - 1).getX() - minX) * scaleX + PADDING_LEFT);
         int yLast = (int) (getHeight() - ((points.get(points.size() - 1).getY()) * scaleY + PADDING_BOTTOM));
         g2d.fillOval(xLast - 5, yLast - 5, 10, 10);
+    }
+
+    private void scaleTextBoxes() {
+        float scaleFactor = JBUIScale.sysScale();
+        int gap = Math.round(30 * scaleFactor);
+
+        lineTypeLabel.setBounds(PADDING_LEFT, lineTypeLabel.getY(), (int) (BUTTON_WIDTHS[0] * scaleFactor), lineTypeLabel.getHeight());
+        codeLines.setBounds(lineTypeLabel.getX() + lineTypeLabel.getWidth() , lineTypeLabel.getY(), (int) (BUTTON_WIDTHS[1] * scaleFactor), lineTypeLabel.getHeight());
+        totalLines.setBounds(codeLines.getX() + codeLines.getWidth() , lineTypeLabel.getY(), (int) (BUTTON_WIDTHS[2] * scaleFactor), lineTypeLabel.getHeight());
+
+
+        pointTypeLabel.setBounds(totalLines.getX() + totalLines.getWidth() + gap * 2, lineTypeLabel.getY(), (int) (BUTTON_WIDTHS[3] * scaleFactor), lineTypeLabel.getHeight());
+        commitPoints.setBounds(pointTypeLabel.getX() + pointTypeLabel.getWidth() , lineTypeLabel.getY(), (int) (BUTTON_WIDTHS[4] * scaleFactor), lineTypeLabel.getHeight());
+        genericPoints.setBounds(commitPoints.getX() + commitPoints.getWidth() , lineTypeLabel.getY(), (int) (BUTTON_WIDTHS[5] * scaleFactor), lineTypeLabel.getHeight());
     }
 
     public enum TimePointMode {COMMIT, GENERIC}
