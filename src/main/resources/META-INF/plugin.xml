@@ -2,7 +2,7 @@
 <idea-plugin>
     <!-- Unique identifier of the plugin. It should be FQN. It cannot be changed between the plugin versions. -->
     <id>com.gk646.codeStats</id>
-    <version>1.5.4</version>
+    <version>1.5.5</version>
     <!-- Public plugin name should be written in Title Case.
          Guidelines: https://plugins.jetbrains.com/docs/marketplace/plugin-overview-page.html#plugin-name -->
     <name>CodeStats</name>
@@ -47,6 +47,11 @@
 
 ]]></description>
     <change-notes><![CDATA[
+    <h2>Release 1.5.5</h2>
+      <ul>
+        <li>Fixed a static version number that prevented the plugin to be loaded on newer IDE versions</li>
+        <li>Added correct scaling for the timeline radio buttons with higher DPI values</li>
+      </ul>
     <h2>Release 1.5.4</h2>
       <ul>
         <li>Fixed the timeline not scaling correctly with high dpi displays</li>

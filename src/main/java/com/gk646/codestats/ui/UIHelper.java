@@ -33,8 +33,6 @@ import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.components.JBRadioButton;
-import com.intellij.ui.components.JBScrollPane;
-import com.intellij.ui.table.JBTable;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -47,14 +45,12 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTable;
 import javax.swing.table.DefaultTableCellRenderer;
-import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableModel;
 import javax.swing.table.TableRowSorter;
 import java.awt.Component;
 import java.awt.Font;
 import java.awt.GridBagConstraints;
-import java.awt.GridBagLayout;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.nio.charset.StandardCharsets;
@@ -229,6 +225,14 @@ public final class UIHelper {
     }
 
     public static void addTimeLineButtons(@NotNull LineChartPanel lineChartPanel, @NotNull JBRadioButton commitPoints, @NotNull JBRadioButton genericPoints, @NotNull JBRadioButton codeLines, @NotNull JBRadioButton totalLines) {
+        lineChartPanel.BUTTON_WIDTHS[0] = 55;
+        lineChartPanel.BUTTON_WIDTHS[1] = 95;
+        lineChartPanel.BUTTON_WIDTHS[2] = 115;
+
+        lineChartPanel.BUTTON_WIDTHS[3] = 80;
+        lineChartPanel.BUTTON_WIDTHS[4] = 80;
+        lineChartPanel.BUTTON_WIDTHS[5] = 90;
+
         lineChartPanel.setLayout(null);
         codeLines.setSelected(true);
         genericPoints.setSelected(true);
@@ -263,18 +267,17 @@ public final class UIHelper {
         pointModeGroup.add(genericPoints);
 
 
-        JLabel lineTypeLabel = new JLabel("Y-Axis:");
-        lineTypeLabel.setBounds(10, 1, 70, 20);
-        lineChartPanel.add(lineTypeLabel);
+        lineChartPanel.lineTypeLabel.setBounds(10, 1, 70, 20);
+        lineChartPanel.add(lineChartPanel.lineTypeLabel);
 
         codeLines.setBounds(70, 1, 107, 20);
         totalLines.setBounds(180, 1, 115, 20);
         lineChartPanel.add(codeLines);
         lineChartPanel.add(totalLines);
 
-        JLabel pointTypeLabel = new JLabel("Data Points:");
-        pointTypeLabel.setBounds(340, 1, 110, 20);
-        lineChartPanel.add(pointTypeLabel);
+
+        lineChartPanel.pointTypeLabel.setBounds(340, 1, 110, 20);
+        lineChartPanel.add(lineChartPanel.pointTypeLabel);
 
         commitPoints.setBounds(440, 1, 80, 20);
         genericPoints.setBounds(522, 1, 90, 20);
