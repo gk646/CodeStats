@@ -318,7 +318,7 @@ public final class Parser {
     private void buildSeparateTabs() {
         var columnNames = new String[]{"Source File", "Total Lines", "Source Code Lines", "Source Code Lines [%]", "Comment Lines", "Documentation Lines", "Blank Lines", "Blank Lines [%]"};
 
-        for (var pair : tabs.entrySet()) {
+        for (var pair : tabs.entrySet()) { 
             var fileList = pair.getValue();
             if (fileList.isEmpty()) continue;
 

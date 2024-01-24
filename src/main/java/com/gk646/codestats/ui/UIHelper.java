@@ -225,11 +225,11 @@ public final class UIHelper {
     }
 
     public static void addTimeLineButtons(@NotNull LineChartPanel lineChartPanel, @NotNull JBRadioButton commitPoints, @NotNull JBRadioButton genericPoints, @NotNull JBRadioButton codeLines, @NotNull JBRadioButton totalLines) {
-        lineChartPanel.BUTTON_WIDTHS[0] = 55;
-        lineChartPanel.BUTTON_WIDTHS[1] = 95;
+        lineChartPanel.BUTTON_WIDTHS[0] = 65;
+        lineChartPanel.BUTTON_WIDTHS[1] = 100;
         lineChartPanel.BUTTON_WIDTHS[2] = 115;
 
-        lineChartPanel.BUTTON_WIDTHS[3] = 80;
+        lineChartPanel.BUTTON_WIDTHS[3] = 90;
         lineChartPanel.BUTTON_WIDTHS[4] = 80;
         lineChartPanel.BUTTON_WIDTHS[5] = 90;
 
