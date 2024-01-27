@@ -6,7 +6,6 @@
     <!-- Public plugin name should be written in Title Case.
          Guidelines: https://plugins.jetbrains.com/docs/marketplace/plugin-overview-page.html#plugin-name -->
     <name>CodeStats</name>
-    <idea-version since-build="222.3345.118"/>
     <!-- A displayed Vendor name or Organization ID displayed on the Plugins Page. -->
     <vendor email="" url="https://github.com/gk646/CodeStats">gk646</vendor>
 
@@ -50,6 +49,7 @@
      <h2>Release 1.5.6</h2>
       <ul>
         <li>Fixed a visual error with textboxes in the timeline tab</li>
+        <li>Fixed compatibility: Should now be compatible will all future releases</li>
       </ul>
     <h2>Release 1.5.5</h2>
       <ul>
