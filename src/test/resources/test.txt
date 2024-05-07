@@ -1,0 +1,12 @@
+# Python Source and Comments
+def main():  # Main function definition
+    """ Python docstring
+    Detailed information here
+    """
+    # Printing output
+    print("Hello, World!")  # Print statement
+
+if __name__ == "__main__":
+    main()  # Call main
+
+# End of Python script

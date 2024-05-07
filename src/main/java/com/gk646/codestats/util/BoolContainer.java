@@ -25,6 +25,7 @@
 package com.gk646.codestats.util;
 
 public final class BoolContainer {
-    public boolean first;
-    public boolean second;
+    public boolean multiLineCommentJava;
+    public boolean multiLineDocJava;
+    public boolean multiLineLIneDocPython;
 }

@@ -43,5 +43,17 @@ public final class StatEntry {
     StatEntry(String name) {
         this.name = name;
     }
+
+    @Override
+    public String toString() {
+        return "StatEntry{" +
+                "name='" + name + '\'' +
+                ", totalLines=" + totalLines +
+                ", sourceCodeLines=" + sourceCodeLines +
+                ", commentLines=" + commentLines +
+                ", blankLines=" + blankLines +
+                ", docLines=" + docLines +
+                '}';
+    }
 }
 
