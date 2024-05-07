@@ -1,7 +1,7 @@
 /*
  * MIT License
  *
- * Copyright (c) 2023 gk646
+ * Copyright (c) 2024 gk646
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -51,10 +51,14 @@ import javax.swing.table.TableRowSorter;
 import java.awt.Component;
 import java.awt.Font;
 import java.awt.GridBagConstraints;
+import java.awt.Insets;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
+import java.lang.reflect.Array;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.List;
 
 /**
  * Utility class for UI elements
@@ -187,29 +191,32 @@ public final class UIHelper {
         return new ActionButton(anAction, anAction.getTemplatePresentation(), text, ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE);
     }
 
-    public static void createMainUI(@NotNull GridBagConstraints gbc, ActionButton refreshButton, ActionButton settingsButton, @NotNull JPanel mainPanel) {
-        gbc.gridx = 0;
-        gbc.gridy = 0;
-        gbc.anchor = GridBagConstraints.WEST;
-        gbc.weightx = 0;
-        gbc.fill = GridBagConstraints.NONE;
-        gbc.insets = JBUI.insets(2, 5, 0, 2);
-        mainPanel.add(refreshButton, gbc);
+    public static void createMainUI(@NotNull GridBagConstraints gbc, List<ActionButton> buttons, @NotNull JPanel mainPanel) {
+        gbc.gridx = 0; // Reset to start from the first column
+        gbc.gridy = 0; // First row for buttons
+        gbc.anchor = GridBagConstraints.WEST; // Align components to the west
+        gbc.insets = JBUI.insets(2, 1, 0, 2); // Uniform insets
 
-        gbc.gridx = 1;
-        gbc.insets = JBUI.insets(2, 1, 0, 2);
-        mainPanel.add(settingsButton, gbc);
+        // Add buttons in the first row
+        for (ActionButton button : buttons) {
+            gbc.weightx = 0; // Do not allow horizontal expansion
+            gbc.weighty = 0; // Do not allow vertical expansion
+            mainPanel.add(button, gbc);
+            gbc.gridx++; // Move to the next cell in the grid for the next button
+        }
 
-        gbc.gridx = 0;
-        gbc.gridy = 1;
-        gbc.gridwidth = 2;
-        gbc.weightx = 1.0;
-        gbc.weighty = 1.0;
-        gbc.fill = GridBagConstraints.BOTH;
-        gbc.insets = JBUI.emptyInsets();
+        // Set up the main content area to fill the rest of the space
+        gbc.gridx = 0; // Reset to the first column for the main panel
+        gbc.gridy = 1; // Second row for the main panel
+        gbc.gridwidth = GridBagConstraints.REMAINDER; // Span across all remaining columns
+        gbc.weightx = 1.0; // Allow horizontal expansion to fill space
+        gbc.weighty = 1.0; // Allow vertical expansion to fill space
+        gbc.fill = GridBagConstraints.BOTH; // Fill both horizontal and vertical space
+        gbc.insets = JBUI.emptyInsets(); // No insets for the main panel
+
         mainPanel.add(CodeStatsWindow.TABBED_PANE, gbc);
 
-        //To react to resize events for the TIME_LINE
+        // Component listener to handle resize events
         mainPanel.addComponentListener(new ComponentAdapter() {
             @Override
             public void componentResized(ComponentEvent e) {
@@ -217,6 +224,7 @@ public final class UIHelper {
             }
         });
 
+        // Change listener for tabbed pane
         CodeStatsWindow.TABBED_PANE.addChangeListener(e -> {
             if (CodeStatsWindow.TABBED_PANE.getSelectedIndex() == 1) {
                 CodeStatsWindow.TIME_LINE.refreshGraphic = true;
@@ -230,7 +238,7 @@ public final class UIHelper {
         lineChartPanel.BUTTON_WIDTHS[2] = 115;
 
         lineChartPanel.BUTTON_WIDTHS[3] = 90;
-        lineChartPanel.BUTTON_WIDTHS[4] = 80;
+        lineChartPanel.BUTTON_WIDTHS[4] = 90;
         lineChartPanel.BUTTON_WIDTHS[5] = 90;
 
         lineChartPanel.setLayout(null);

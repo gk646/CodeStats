@@ -2,7 +2,7 @@
 <idea-plugin>
     <!-- Unique identifier of the plugin. It should be FQN. It cannot be changed between the plugin versions. -->
     <id>com.gk646.codeStats</id>
-    <version>1.5.6</version>
+    <version>1.5.7</version>
     <!-- Public plugin name should be written in Title Case.
          Guidelines: https://plugins.jetbrains.com/docs/marketplace/plugin-overview-page.html#plugin-name -->
     <name>CodeStats</name>
@@ -46,6 +46,12 @@
 
 ]]></description>
     <change-notes><![CDATA[
+    <h2>Release 2.0.0</h2>
+     <p>A bigger update containing some new requested features!</p>
+      <ul>
+        <li>Added obj to build exclusion list</li>
+        <li>Fixed compatibility: Should now be compatible will all future releases</li>
+      </ul>
      <h2>Release 1.5.6</h2>
       <ul>
         <li>Fixed a visual error with textboxes in the timeline tab</li>
@@ -142,10 +148,9 @@
          Read more: https://plugins.jetbrains.com/docs/intellij/plugin-extension-points.html -->
     <extensions defaultExtensionNs="com.intellij">
         <toolWindow id="CodeStats" anchor="bottom" factoryClass="com.gk646.codestats.CodeStatsWindow" icon="icons/CodeStatsIcon.png"/>
-        <applicationConfigurable id="CodeStatsConfigurable" displayName="Code Stats" groupId="tools"
+        <applicationConfigurable id="CodeStatsConfigurable" displayName="CodeStats" groupId="tools"
                                  instance="com.gk646.codestats.settings.SettingsPanel"/>
         <notificationGroup displayType="BALLOON" id="CodeStats" isLogByDefault="false"/>
-        <postStartupActivity implementation="com.gk646.codestats.CodeStatsWindow"/>
         <checkinHandlerFactory implementation="com.gk646.codestats.util.CommitHandlerFactory"/>
     </extensions>
 

@@ -1,7 +1,7 @@
 /*
  * MIT License
  *
- * Copyright (c) 2023 gk646
+ * Copyright (c) 2024 gk646
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -61,7 +61,7 @@ public final class SettingsPanel implements Configurable {
     private static final JBTextField separateTabsField = new JBTextField(10);
     private static final JBCheckBox exclude_idea = new JBCheckBox("Exclude IDE configuration directories (.idea|.vs|.project)");
     private static final JBCheckBox exclude_npm = new JBCheckBox("Exclude specific (node_modules|.docker)");
-    private static final JBCheckBox exclude_compiler = new JBCheckBox("Exclude build and compiler output (out|target|build|cmake|dist|bin|.gradle)");
+    private static final JBCheckBox exclude_compiler = new JBCheckBox("Exclude build and compiler output (out|target|obj|build|cmake|dist|bin|.gradle)");
     private static final JBCheckBox exclude_cache = new JBCheckBox("Exclude cache and temporary (.cache|tmp|temp)");
     private static final JBCheckBox exclude_python = new JBCheckBox("Exclude python and environment (venv|env|.env)");
     private static final JBCheckBox excludeVCS = new JBCheckBox("Exclude VCS directories (.git|.svn|.hg)");
@@ -104,7 +104,7 @@ public final class SettingsPanel implements Configurable {
                 || !includedFileTypesField.getText().equals(settings.includedFileTypes)
                 || !separateTabsField.getText().equals(settings.separateTabsTypes)
                 || exclude_idea.isSelected() != settings.isExcludeIDE
-                || exclude_npm.isSelected() != settings.isExcludeSpecifics
+                || exclude_npm.isSelected() != settings.isExcludeNPM
 
                 || exclude_python.isSelected() != settings.isExcludePython
                 || exclude_cache.isSelected() != settings.isExcludeCache
@@ -124,7 +124,7 @@ public final class SettingsPanel implements Configurable {
         includedFileTypesField.setText(settings.includedFileTypes);
         separateTabsField.setText(settings.separateTabsTypes);
         exclude_idea.setSelected(settings.isExcludeIDE);
-        exclude_npm.setSelected(settings.isExcludeSpecifics);
+        exclude_npm.setSelected(settings.isExcludeNPM);
         exclude_compiler.setSelected(settings.excludeCompiler);
         excludeVCS.setSelected(settings.excludeGit);
         disableAutomaticUpdate.setSelected(settings.disableAutoUpdate);
@@ -151,7 +151,7 @@ public final class SettingsPanel implements Configurable {
         settings.includedFileTypes = includedFileTypesField.getText();
         settings.separateTabsTypes = separateTabsField.getText();
         settings.isExcludeIDE = exclude_idea.isSelected();
-        settings.isExcludeSpecifics = exclude_npm.isSelected();
+        settings.isExcludeNPM = exclude_npm.isSelected();
         settings.isExcludePython = exclude_python.isSelected();
         settings.isExcludeCache = exclude_cache.isSelected();
         settings.excludeCompiler = exclude_compiler.isSelected();

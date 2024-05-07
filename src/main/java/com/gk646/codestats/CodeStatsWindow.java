@@ -1,7 +1,7 @@
 /*
  * MIT License
  *
- * Copyright (c) 2023 gk646
+ * Copyright (c) 2024 gk646
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -31,10 +31,14 @@ import com.gk646.codestats.ui.LineChartPanel;
 import com.gk646.codestats.ui.UIHelper;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
+import com.intellij.openapi.fileChooser.FileChooser;
+import com.intellij.openapi.fileChooser.FileChooserDescriptor;
+import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupActivity;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowFactory;
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener;
@@ -47,6 +51,7 @@ import javax.swing.JTabbedPane;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.Objects;
 
 public final class CodeStatsWindow implements ToolWindowFactory, ToolWindowManagerListener, DumbAware, StartupActivity.DumbAware {
@@ -61,14 +66,18 @@ public final class CodeStatsWindow implements ToolWindowFactory, ToolWindowManag
      *
      * @param isSilentUpdate true if the update should not create a notification
      */
-    public static void update(boolean isSilentUpdate) {
+    public static void update(boolean isSilentUpdate, Path basePath) {
         if (PARSER.isUpdating.get()) return;
         PARSER.isUpdating.set(true);
         int tabCount = TABBED_PANE.getTabCount();
         for (int i = tabCount - 1; i > 0; i--) {
             TABBED_PANE.remove(i);
         }
-        PARSER.updatePane(isSilentUpdate);
+        PARSER.updatePane(isSilentUpdate, basePath);
+    }
+
+    public static void update(boolean isSilentUpdate) {
+        update(isSilentUpdate, PARSER.projectPath);
     }
 
     /**
@@ -96,11 +105,25 @@ public final class CodeStatsWindow implements ToolWindowFactory, ToolWindowManag
         ActionButton refreshButton = UIHelper.createButton("Refresh", "Get CodeStats!", AllIcons.Actions.Refresh, () -> CodeStatsWindow.update(false));
         ActionButton settingsButton = UIHelper.createButton("Settings", "Customize CodeStats!", AllIcons.General.GearPlain,
                 () -> ShowSettingsUtil.getInstance().showSettingsDialog(project, SettingsPanel.class));
+        ActionButton directoryChooser = UIHelper.createButton("Scan custom directory", "Choose and scan a custom directory", AllIcons.Actions.Preview, () -> {
+            FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor();
+            descriptor.setTitle("Select Directory");
+
+            // Open the dialog and get the result
+            var file = FileChooser.chooseFile(descriptor, project, null);
+            if (file != null) {
+                var path = file.getFileSystem().getNioPath(file);
+                if (path != null) update(false, path);
+            } else {
+                Messages.showInfoMessage(project, "No directory was selected.", "No Selection");
+            }
+        });
+
 
         JPanel mainPanel = new JPanel(new GridBagLayout());
         GridBagConstraints gbc = new GridBagConstraints();
 
-        UIHelper.createMainUI(gbc, refreshButton, settingsButton, mainPanel);
+        UIHelper.createMainUI(gbc, List.of(refreshButton, settingsButton, directoryChooser), mainPanel);
 
         var content = ContentFactory.getInstance().createContent(mainPanel, "CodeStats", true);
         toolWindow.getContentManager().addContent(content);
