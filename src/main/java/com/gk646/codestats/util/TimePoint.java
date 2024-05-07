@@ -1,7 +1,7 @@
 /*
  * MIT License
  *
- * Copyright (c) 2023 gk646
+ * Copyright (c) 2024 gk646
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -66,39 +66,6 @@ public final class TimePoint {
         this.totalLines = totalLines;
         this.info = info;
     }
-
-    /**
-     * To test the scaling and visuals of the line chart
-     *
-     * @param numPoints
-     * @return
-     */
-    public static @NotNull List<TimePoint> generateMockTimePoints(int numPoints) {
-        List<TimePoint> mockPoints = new ArrayList<>();
-
-
-        double a = -1;
-        double b = 25000.0 / numPoints;
-        double c = 0;
-
-        for (int i = 0; i < numPoints; i++) {
-            TimePoint point = new TimePoint();
-
-            long randomMillisOffset = (long) (numPoints - i) * TimePoint.MILLISEC_PER_DAY / 2;
-            point.timestamp = ZonedDateTime.now().toInstant().toEpochMilli() - randomMillisOffset;
-
-            point.linesCode = (int) (a * Math.pow(i, 2) + b * i + c);
-            point.totalLines = point.linesCode;
-
-            LocalDate date = Instant.ofEpochMilli(point.timestamp).atZone(ZoneId.systemDefault()).toLocalDate();
-            point.info = date.toString();
-
-            mockPoints.add(point);
-        }
-
-        return mockPoints;
-    }
-
 
     public long getX() {
         return timestamp;

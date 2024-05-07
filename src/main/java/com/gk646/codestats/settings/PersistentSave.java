@@ -1,7 +1,7 @@
 /*
  * MIT License
  *
- * Copyright (c) 2023 gk646
+ * Copyright (c) 2024 gk646
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -54,14 +54,14 @@ public final class PersistentSave implements PersistentStateComponent<Persistent
     private static final int MAX_SAVED_TIMEPOINTS = 200;
     public List<TimePoint> commitTimePoints = new ArrayList<>(15);
     public List<TimePoint> genericTimePoints = new ArrayList<>(15);
-    public String excludedFileTypes = "wav;ttf;sql;tmp;dmp;ico;dat;svg;class;svn-base;svn-work;gif;png;jpg;mp3;jpeg;bmp;tga;tiff;ear;war;zip;jar;iml;iws;ipr;bz2;gz;pyc;rar;.bak;.swp;.tmp;.log";
+    public String excludedFileTypes = "exe;wav;ttf;sql;tmp;dmp;ico;dat;svg;class;svn-base;svn-work;gif;png;jpg;mp3;jpeg;bmp;tga;tiff;ear;war;zip;jar;iml;iws;ipr;bz2;gz;pyc;rar;bak;swp;tmp;log;pdb;obj;ipch;dll";
     public String includedFileTypes = "";
     public String separateTabsTypes = "java;cpp;c;hpp;h;rs;css;html;js;php;py;cs;go;rb;swift;ts;kt;sql;pl;lua;groovy;asp;aspx;jsp;json;scss;less;sass;sh;bat;ps1;md;f;r;m;asm;ada;scala;dart;jsx;julia";
     public String charSet = StandardCharsets.UTF_8.toString();
     public boolean isExcludeIDE = true;
     public boolean isExcludeCache = true;
     public boolean isExcludePython = true;
-    public boolean isExcludeSpecifics = true;
+    public boolean isExcludeNPM = true;
     public boolean excludeCompiler = true;
     public boolean excludeGit = true;
     public boolean disableAutoUpdate = false;

@@ -1,7 +1,7 @@
 /*
  * MIT License
  *
- * Copyright (c) 2023 gk646
+ * Copyright (c) 2024 gk646
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -74,6 +74,8 @@ public final class ParsingUtil {
         return lines;
     }
 
+
+    // Old java version compatability  ;(.
     public static Charset getCharsetFallback(String charsetName, Charset fallbackCharset) {
         try {
             return Charset.forName(charsetName);

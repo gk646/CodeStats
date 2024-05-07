@@ -1,7 +1,7 @@
 /*
  * MIT License
  *
- * Copyright (c) 2023 gk646
+ * Copyright (c) 2024 gk646
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -30,8 +30,10 @@ import com.gk646.codestats.settings.SettingsPanel;
 import com.gk646.codestats.ui.LineChartPanel;
 import com.gk646.codestats.ui.UIHelper;
 import com.gk646.codestats.util.BoolContainer;
+import com.gk646.codestats.util.IntellijUtil;
 import com.gk646.codestats.util.ParsingUtil;
 import com.gk646.codestats.util.TimePoint;
+import com.google.rpc.Code;
 import com.intellij.icons.AllIcons;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
@@ -45,12 +47,16 @@ import com.intellij.ui.table.JBTable;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.JPanel;
+import javax.swing.JTabbedPane;
+import javax.swing.JTable;
 import javax.swing.RowSorter;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableRowSorter;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.io.File;
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -75,12 +81,6 @@ import java.util.HashSet;
 import java.util.Locale;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Stream;
-
-/*Might need a redesign
-Might be possible without a hashmap or any intermediary storage
-deletion of overview tab not necessary as it's always the first
-could create manual indices for the filetypes and use an array instead of a hashmap for the tabs
- */
 
 /**
  * Handles all the parsing of source and non-source files.
@@ -194,7 +194,7 @@ public final class Parser {
             excludedDirs.add(projectPath + File.separator + ".classpath");
         }
 
-        if (save.isExcludeSpecifics) {
+        if (save.isExcludeNPM) {
             excludedDirs.add(projectPath + File.separator + "node_modules");
             excludedDirs.add(projectPath + File.separator + ".docker");
         }
@@ -206,8 +206,11 @@ public final class Parser {
             excludedDirs.add(projectPath + File.separator + "target");
             excludedDirs.add(projectPath + File.separator + "cmake-build-debug");
             excludedDirs.add(projectPath + File.separator + "cmake-build-release");
+            excludedDirs.add(projectPath + File.separator + "cmake-build-Release");
+            excludedDirs.add(projectPath + File.separator + "cmake-build-Debug");
             excludedDirs.add(projectPath + File.separator + "dist");
             excludedDirs.add(projectPath + File.separator + "bin");
+            excludedDirs.add(projectPath + File.separator + "obj");
         }
 
         if (save.excludeGit) {
@@ -232,15 +235,15 @@ public final class Parser {
         charset = ParsingUtil.getCharsetFallback(save.charSet, StandardCharsets.UTF_8);
     }
 
-    public void updatePane(boolean isSilentUpdate) {
+    public void updatePane(boolean isSilentUpdate, Path path) {
         Task.Backgroundable task = new Task.Backgroundable(CodeStatsWindow.project, "Updating Code Stats", false) {
             @Override
             public void run(@NotNull ProgressIndicator indicator) {
                 var time = System.currentTimeMillis();
                 resetCache();
-                iterateFiles();
+                iterateFiles(path);
                 ApplicationManager.getApplication().invokeLater(() -> {
-                    rebuildTabbedPane();
+                    rebuildTabbedPane(path);
                     isUpdating.set(false);
                     if (isSilentUpdate) return;
                     var duration = System.currentTimeMillis() - time;
@@ -253,7 +256,7 @@ public final class Parser {
         ProgressManager.getInstance().run(task);
     }
 
-    private void rebuildTabbedPane() {
+    private void rebuildTabbedPane(Path path) {
         Locale germanLocale = Locale.GERMAN;
         DecimalFormat df = new DecimalFormat("#,###kb", new DecimalFormatSymbols(germanLocale));
 
@@ -294,8 +297,12 @@ public final class Parser {
         footerModel.setDataVector(footerData, new String[]{"", "", "", "", "", "", "", "", "", "", ""});
 
 
-        //Adds the new timeline tab as the second tab
-        handleTimelineTab((int) footerData[0][10], (int) footerData[0][6]);
+        //Adds the new timeline tab as the second tab ONLY IF it's a normal refresh
+        if (path.equals(projectPath)){
+            handleTimelineTab((int) footerData[0][10], (int) footerData[0][6]);
+        }else{
+            CodeStatsWindow.TABBED_PANE.addTab("Refresh to reset view",AllIcons.Actions.QuickfixBulb,new JTabbedPane());
+        }
         //Build the separate tabs
         buildSeparateTabs();
     }
@@ -318,7 +325,7 @@ public final class Parser {
     private void buildSeparateTabs() {
         var columnNames = new String[]{"Source File", "Total Lines", "Source Code Lines", "Source Code Lines [%]", "Comment Lines", "Documentation Lines", "Blank Lines", "Blank Lines [%]"};
 
-        for (var pair : tabs.entrySet()) { 
+        for (var pair : tabs.entrySet()) {
             var fileList = pair.getValue();
             if (fileList.isEmpty()) continue;
 
@@ -371,6 +378,22 @@ public final class Parser {
         var gbc = new GridBagConstraints();
         panel.add(new JBScrollPane(table), UIHelper.setMainTableConstraint(gbc));
         panel.add(tabFooterTable, UIHelper.setFooterTableConstraint(gbc));
+
+        // Mouse listener for opening files - only for separate tabs as these show file stats
+        table.addMouseListener(new MouseAdapter() {
+            public void mouseClicked(MouseEvent e) {
+                if (e.getClickCount() == 2 && e.getButton() == MouseEvent.BUTTON1) {
+                    JTable target = (JTable) e.getSource();
+                    int row = target.getSelectedRow();
+                    if (row != -1) {
+                        // Assuming the first column contains the file path or name
+                        String filePath = (String) table.getModel().getValueAt(table.convertRowIndexToModel(row), 0);
+                        IntellijUtil.openFileInEditor(filePath, table);
+                    }
+                }
+            }
+        });
+
         CodeStatsWindow.TABBED_PANE.addTab(tabName, AllIcons.General.ArrowSplitCenterH, panel);
     }
 
@@ -380,22 +403,22 @@ public final class Parser {
         if (separateTabs.contains(extension)) {
             var entry = new StatEntry(path.getFileName().toString());
             long size = 0;
-            var bool = new BoolContainer(); // first = multiline comment / second = multiline doc
+            var stateFlags = new BoolContainer(); // first = multiline comment / second = multiline doc
             try {
                 size = Files.size(path);
                 try (Stream<String> linesStream = Files.newBufferedReader(path, charset).lines()) {
                     linesStream.forEach(line -> {
                         line = line.trim();
-                        if (bool.first || bool.second) {
-                            if (bool.second && line.startsWith("*")) {
+                        if (stateFlags.first || stateFlags.second) {
+                            if (stateFlags.second && line.startsWith("*")) {
                                 entry.docLines++;
                             }
-                            if (bool.first) {
+                            if (stateFlags.first) {
                                 entry.commentLines++;
                             }
                             if (line.contains("*/")) {
-                                bool.first = false;
-                                bool.second = false;
+                                stateFlags.first = false;
+                                stateFlags.second = false;
                             }
                         } else {
                             if (line.isEmpty()) {
@@ -403,11 +426,11 @@ public final class Parser {
                             } else if (line.startsWith("//") || line.startsWith("#")) {
                                 entry.commentLines++;
                             } else if (line.startsWith("/*")) {
-                                bool.first = true;
+                                stateFlags.first = true;
                                 entry.commentLines++;
                                 if (line.startsWith("/**")) {
-                                    bool.second = true;
-                                    bool.first = false;
+                                    stateFlags.second = true;
+                                    stateFlags.first = false;
                                     entry.commentLines--;
                                     entry.docLines++;
                                 }
@@ -451,9 +474,9 @@ public final class Parser {
         }
     }
 
-    private void iterateFiles() {
+    private void iterateFiles(Path path) {
         try {
-            Files.walkFileTree(projectPath, visitor);
+            Files.walkFileTree(path, visitor);
         } catch (IOException e) {
             e.printStackTrace();
         }
