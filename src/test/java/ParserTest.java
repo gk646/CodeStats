@@ -22,26 +22,21 @@
  * SOFTWARE.
  */
 
-package com.gk646.codestats.util;
+import com.gk646.codestats.stats.Parser;
 
-import com.gk646.codestats.CodeStatsWindow;
-import com.intellij.openapi.vcs.CheckinProjectPanel;
-import com.intellij.openapi.vcs.changes.CommitContext;
-import com.intellij.openapi.vcs.checkin.CheckinHandler;
-import com.intellij.openapi.vcs.checkin.CheckinHandlerFactory;
-import org.jetbrains.annotations.NotNull;
+import java.nio.file.Path;
+import java.util.ArrayList;
 
-public final class CommitHandlerFactory extends CheckinHandlerFactory {
+public class ParserTest {
 
-    @Override
-    public @NotNull CheckinHandler createHandler(@NotNull CheckinProjectPanel panel, @NotNull CommitContext commitContext) {
-        if(CodeStatsWindow.project == null)CodeStatsWindow.SetProject(panel.getProject());
-        var commitMsg = panel.getCommitMessage();
-        if (commitMsg.length() > 25) {
-            CodeStatsWindow.PARSER.commitText = commitMsg.substring(0, 50);
-        } else {
-            CodeStatsWindow.PARSER.commitText = commitMsg;
-        }
-        return new CommitListener();
+
+    public static void main(String[] args) {
+        Parser p = new Parser();
+        Parser.separateTabs.add(".txt");
+        Parser.tabs.put(".txt", new ArrayList<>());
+
+        p.parseFile(Path.of("src/test/resources/test.txt"), ".txt");
+
+        System.out.println(Parser.tabs.get(".txt").get(0).toString());
     }
 }

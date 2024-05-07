@@ -5,7 +5,7 @@ plugins {
 }
 
 group = "com.gk646"
-version = "1.5.6"
+version = "2.0.0"
 
 repositories {
   mavenCentral()

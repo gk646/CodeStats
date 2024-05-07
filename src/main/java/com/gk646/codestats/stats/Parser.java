@@ -33,7 +33,6 @@ import com.gk646.codestats.util.BoolContainer;
 import com.gk646.codestats.util.IntellijUtil;
 import com.gk646.codestats.util.ParsingUtil;
 import com.gk646.codestats.util.TimePoint;
-import com.google.rpc.Code;
 import com.intellij.icons.AllIcons;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
@@ -91,10 +90,10 @@ import java.util.stream.Stream;
 public final class Parser {
     private static final HashSet<String> excludedTypes = new HashSet<>(16, 1);
     private static final HashSet<String> excludedDirs = new HashSet<>(16, 1);
-    private static final HashSet<String> separateTabs = new HashSet<>(16, 1);
+    public static final HashSet<String> separateTabs = new HashSet<>(16, 1);
     private static final HashSet<String> whiteListTypes = new HashSet<>(16, 1);
-    private static final HashMap<String, OverViewEntry> overView = new HashMap<>(10);
-    private static final HashMap<String, ArrayList<StatEntry>> tabs = new HashMap<>(6);
+    public static final HashMap<String, OverViewEntry> overView = new HashMap<>(10);
+    public static final HashMap<String, ArrayList<StatEntry>> tabs = new HashMap<>(6);
     private final FileVisitor<Path> visitor;
     public AtomicBoolean isUpdating = new AtomicBoolean(false);
     public boolean commitHappened = false;
@@ -129,7 +128,7 @@ public final class Parser {
                 return FileVisitResult.CONTINUE;
             }
         };
-        initializeOverviewTab();
+       initializeOverviewTab(); // Comment this when testing - haha this code is a hot mess ... :(.
     }
 
     private void initializeOverviewTab() {
@@ -298,10 +297,10 @@ public final class Parser {
 
 
         //Adds the new timeline tab as the second tab ONLY IF it's a normal refresh
-        if (path.equals(projectPath)){
+        if (path.equals(projectPath)) {
             handleTimelineTab((int) footerData[0][10], (int) footerData[0][6]);
-        }else{
-            CodeStatsWindow.TABBED_PANE.addTab("Refresh to reset view",AllIcons.Actions.QuickfixBulb,new JTabbedPane());
+        } else {
+            CodeStatsWindow.TABBED_PANE.addTab("Refresh to reset view", AllIcons.Actions.QuickfixBulb, new JTabbedPane());
         }
         //Build the separate tabs
         buildSeparateTabs();
@@ -397,43 +396,54 @@ public final class Parser {
         CodeStatsWindow.TABBED_PANE.addTab(tabName, AllIcons.General.ArrowSplitCenterH, panel);
     }
 
-    private void parseFile(Path path, String extension) {
+    public void parseFile(Path path, String extension) {
         overView.computeIfAbsent(extension, k -> new OverViewEntry());
 
         if (separateTabs.contains(extension)) {
             var entry = new StatEntry(path.getFileName().toString());
             long size = 0;
+            final int[] miscLines = {0}; // New concept - misc lines are deducted from source code lines as well but not shown
             var stateFlags = new BoolContainer(); // first = multiline comment / second = multiline doc
             try {
                 size = Files.size(path);
                 try (Stream<String> linesStream = Files.newBufferedReader(path, charset).lines()) {
                     linesStream.forEach(line -> {
                         line = line.trim();
-                        if (stateFlags.first || stateFlags.second) {
-                            if (stateFlags.second && line.startsWith("*")) {
+                        if (stateFlags.multiLineCommentJava || stateFlags.multiLineDocJava || stateFlags.multiLineLIneDocPython) {
+                            if (stateFlags.multiLineDocJava && line.startsWith("*")) {
                                 entry.docLines++;
                             }
-                            if (stateFlags.first) {
+                            if (stateFlags.multiLineCommentJava) {
                                 entry.commentLines++;
                             }
+                            if(stateFlags.multiLineLIneDocPython){
+                                entry.docLines++;
+                            }
                             if (line.contains("*/")) {
-                                stateFlags.first = false;
-                                stateFlags.second = false;
+                                stateFlags.multiLineCommentJava = false;
+                                stateFlags.multiLineDocJava = false;
+                            }else if(line.contains("\"\"\"")) {
+                                stateFlags.multiLineLIneDocPython = false;
                             }
                         } else {
                             if (line.isEmpty()) {
                                 entry.blankLines++;
-                            } else if (line.startsWith("//") || line.startsWith("#")) {
+                            } else if (line.startsWith("//") || line.startsWith("#") || line.startsWith("--")) {
                                 entry.commentLines++;
                             } else if (line.startsWith("/*")) {
-                                stateFlags.first = true;
+                                stateFlags.multiLineCommentJava = true;
                                 entry.commentLines++;
                                 if (line.startsWith("/**")) {
-                                    stateFlags.second = true;
-                                    stateFlags.first = false;
+                                    stateFlags.multiLineDocJava = true;
+                                    stateFlags.multiLineCommentJava = false;
                                     entry.commentLines--;
                                     entry.docLines++;
                                 }
+                            }else if(line.startsWith("\"\"\"")){
+                                stateFlags.multiLineLIneDocPython= true;
+                            }
+                            else if (line.startsWith("import") || line.startsWith("#include") || line.startsWith("package") || line.startsWith("from")) {
+                                miscLines[0]++;
                             }
                         }
                         entry.totalLines++;
@@ -450,7 +460,7 @@ public final class Parser {
                 }
             }
             //setting separate tab entry data
-            entry.sourceCodeLines = entry.totalLines - entry.blankLines - entry.commentLines - entry.docLines;
+            entry.sourceCodeLines = entry.totalLines - entry.blankLines - entry.commentLines - entry.docLines - miscLines[0];
 
             //setting over view entry data
             overView.get(extension).addValues(size, entry.totalLines, entry.sourceCodeLines);
