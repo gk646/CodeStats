@@ -66,6 +66,7 @@ public final class PersistentSave implements PersistentStateComponent<Persistent
     public boolean excludeGit = true;
     public boolean disableAutoUpdate = false;
     public boolean disableTimeLine = false;
+    public boolean countMiscLines = false;
     @XCollection(propertyElementName = "excludedDirs", elementTypes = String.class)
 
     public List<String> excludedDirectories = new ArrayList<>();
@@ -119,7 +120,6 @@ public final class PersistentSave implements PersistentStateComponent<Persistent
 
         return (hour1 < 12 && hour2 < 12) || (hour1 >= 12 && hour2 >= 12) && day1 == day2 && year1 == year2;
     }
-
 
     public static void clearPoints() {
         var instance = PersistentSave.getInstance();

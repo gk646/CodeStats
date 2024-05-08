@@ -61,11 +61,13 @@ public final class SettingsPanel implements Configurable {
     private static final JBTextField separateTabsField = new JBTextField(10);
     private static final JBCheckBox exclude_idea = new JBCheckBox("Exclude IDE configuration directories (.idea|.vs|.project)");
     private static final JBCheckBox exclude_npm = new JBCheckBox("Exclude specific (node_modules|.docker)");
-    private static final JBCheckBox exclude_compiler = new JBCheckBox("Exclude build and compiler output (out|target|obj|build|cmake|dist|bin|.gradle)");
+    private static final JBCheckBox exclude_compiler = new JBCheckBox("Exclude build and compiler output (out|target|obj|" +
+            "build|cmake|dist|bin|.gradle)");
     private static final JBCheckBox exclude_cache = new JBCheckBox("Exclude cache and temporary (.cache|tmp|temp)");
     private static final JBCheckBox exclude_python = new JBCheckBox("Exclude python and environment (venv|env|.env)");
     private static final JBCheckBox excludeVCS = new JBCheckBox("Exclude VCS directories (.git|.svn|.hg)");
     private static final JBCheckBox disableAutomaticUpdate = new JBCheckBox("Disable automatic update when opening CodeStats");
+    private static final JBCheckBox countMiscLines = new JBCheckBox("Count misc lines as source code (#include|import|package)");
     private static final ComboBox<String> charsetMenu = UIHelper.getCharsetMenu();
 
     private DefaultListModel<String> excludedDirectoriesField;
@@ -105,12 +107,11 @@ public final class SettingsPanel implements Configurable {
                 || !separateTabsField.getText().equals(settings.separateTabsTypes)
                 || exclude_idea.isSelected() != settings.isExcludeIDE
                 || exclude_npm.isSelected() != settings.isExcludeNPM
-
                 || exclude_python.isSelected() != settings.isExcludePython
                 || exclude_cache.isSelected() != settings.isExcludeCache
-
                 || exclude_compiler.isSelected() != settings.excludeCompiler
                 || excludeVCS.isSelected() != settings.excludeGit
+                || countMiscLines.isSelected() != settings.countMiscLines
                 || disableAutomaticUpdate.isSelected() != settings.disableAutoUpdate
                 || disableTimeLine.isSelected() != settings.disableTimeLine
                 || !charsetMenu.getItemAt(charsetMenu.getSelectedIndex()).equals(settings.charSet)
@@ -131,6 +132,8 @@ public final class SettingsPanel implements Configurable {
         disableTimeLine.setSelected(settings.disableTimeLine);
         exclude_cache.setSelected(settings.isExcludeCache);
         exclude_python.setSelected(settings.isExcludePython);
+        countMiscLines.setSelected(settings.countMiscLines);
+
 
         excludedDirectoriesField.clear();
         for (String dir : settings.excludedDirectories) {
@@ -159,7 +162,7 @@ public final class SettingsPanel implements Configurable {
         settings.disableAutoUpdate = disableAutomaticUpdate.isSelected();
         settings.charSet = charsetMenu.getItemAt(charsetMenu.getSelectedIndex());
         settings.disableTimeLine = disableTimeLine.isSelected();
-
+        settings.countMiscLines = countMiscLines.isSelected();
 
         CodeStatsWindow.PARSER.updateState();
     }
@@ -255,6 +258,9 @@ public final class SettingsPanel implements Configurable {
 
         constraints.gridy++;
         panel.add(exclude_python, constraints);
+
+        constraints.gridy++;
+        panel.add(countMiscLines, constraints);
     }
 
     private void addCharsetSection(@NotNull JPanel panel, @NotNull GridBagConstraints constraints) {
@@ -299,3 +305,5 @@ public final class SettingsPanel implements Configurable {
         panel.add(clearTimeLine, constraints);
     }
 }
+
+
