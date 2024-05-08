@@ -2,7 +2,7 @@
 <idea-plugin>
     <!-- Unique identifier of the plugin. It should be FQN. It cannot be changed between the plugin versions. -->
     <id>com.gk646.codeStats</id>
-    <version>2.0.0</version>
+    <version>2.0.1</version>
     <!-- Public plugin name should be written in Title Case.
          Guidelines: https://plugins.jetbrains.com/docs/marketplace/plugin-overview-page.html#plugin-name -->
     <name>CodeStats</name>
@@ -25,10 +25,8 @@
     <li>Documentation Lines</li>
     <li>And more...</li>
 </ul>
-<p>
-    With CodeStats, you can easily measure your project's size, source code line count, and view a timeline of your code-related activities.
-    Note that for efficiency reasons only "/**" (Java, C++) counts as multiline documentation.
-</p>
+<p>With CodeStats, you can easily measure your project's size, source code line count, and view a timeline of your code-related activities.</p>
+<p>Note that for efficiency reasons only "/**" and " """ " (Java, C++, Python) counts as multiline documentation.</p>
 <h3>Features</h3>
 <ul>
     <li>Easy-to-use interface with custom tool window</li>
@@ -47,27 +45,32 @@
 
 ]]></description>
     <change-notes><![CDATA[
+    <h2>Release 2.0.1</h2>
+     <p>Added option to count the new misc lines as source code (per default they arent)</p>
     <h2>Release 2.0.0</h2>
      <p>A bigger update containing some new requested features!</p>
       <ul>
-         <li>><b>Double clicking a table row now allows to open that file</b></li>
-         <ul>
-                <li>This does a simple name matching using the IDE's indices</li>
-                <li>Will report failure or a chooser if multiple matches are found</li>
-         </ul>
-        <li>><b>Added button to choose custom directory to scan</b></li>
-         <ul>
-                <li>This shows all stats just like usual but for a custom chose directory</li>
-                <li>This view does not influence the project timeline</li>
-                <li>This view is reset when you normally refresh the plugin</li>
-                <li>All existing filters will be applied</li>
-         </ul>
-         <li><b>Added compatability for more languages and comment styles (misc lines are subtracted from source lines)</b></li>
-         <ul>
-                <li>Added "--" as comment (Lua, SQL)</li>
-                <li>Added "#include", "import", "package", "from" as misc (C++,java,python)</li>
-                <li>Added python style multiline comments " """ " as documentation</li>
-         </ul>
+         <li><b>Double clicking a table row now allows to open that file</b>
+             <ul>
+                    <li>This does a simple name matching using the IDE's indices</li>
+                    <li>Will report failure or a chooser if multiple matches are found</li>
+            </ul>
+        </li>
+        <li><b>Added button to choose custom directory to scan</b>
+             <ul>
+                    <li>This shows all stats just like usual but for a custom chosen directory</li>
+                    <li>This view does not influence the project timeline</li>
+                    <li>This view is reset when you normally refresh the plugin</li>
+                    <li>All existing filters will be applied</li>
+             </ul>
+        </li>
+        <li><b>Added compatability for more languages and comment styles (misc lines are subtracted from source lines)</b>
+             <ul>
+                    <li>Added "--" as comment (Lua, SQL)</li>
+                    <li>Added "#include", "import", "package", "from" as misc (C++,java,python)</li>
+                    <li>Added python style multiline comments " """ " as documentation</li>
+             </ul>
+        </li>
         <li>Fixed timeline buttons scaling (hopefully now...)</li>
         <li>Fixed bug when making a commit before opening code stats</li>
         <li>Added obj to build exclusion list</li>

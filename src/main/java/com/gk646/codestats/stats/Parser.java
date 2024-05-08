@@ -97,6 +97,7 @@ public final class Parser {
     private final FileVisitor<Path> visitor;
     public AtomicBoolean isUpdating = new AtomicBoolean(false);
     public boolean commitHappened = false;
+    private boolean countMiscLines = false;
     public String commitText;
     public Path projectPath;
     Charset charset = StandardCharsets.UTF_8;
@@ -232,6 +233,7 @@ public final class Parser {
         }
 
         charset = ParsingUtil.getCharsetFallback(save.charSet, StandardCharsets.UTF_8);
+        countMiscLines = save.countMiscLines;
     }
 
     public void updatePane(boolean isSilentUpdate, Path path) {
@@ -460,7 +462,8 @@ public final class Parser {
                 }
             }
             //setting separate tab entry data
-            entry.sourceCodeLines = entry.totalLines - entry.blankLines - entry.commentLines - entry.docLines - miscLines[0];
+            entry.sourceCodeLines = entry.totalLines - entry.blankLines - entry.commentLines - entry.docLines;
+            if(!countMiscLines) entry.sourceCodeLines-= miscLines[0];
 
             //setting over view entry data
             overView.get(extension).addValues(size, entry.totalLines, entry.sourceCodeLines);
