@@ -443,6 +443,10 @@ public final class Parser {
                                 }
                             }else if(line.startsWith("\"\"\"")){
                                 stateFlags.multiLineLIneDocPython= true;
+                                if(line.contains("\"\"\"")){
+                                    entry.docLines++;
+                                    stateFlags.multiLineLIneDocPython = false;
+                                }
                             }
                             else if (line.startsWith("import") || line.startsWith("#include") || line.startsWith("package") || line.startsWith("from")) {
                                 miscLines[0]++;
