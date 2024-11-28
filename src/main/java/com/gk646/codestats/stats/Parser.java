@@ -79,6 +79,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Locale;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
 /**
@@ -88,19 +89,20 @@ import java.util.stream.Stream;
  */
 @SuppressWarnings("DialogTitleCapitalization")
 public final class Parser {
-    private static final HashSet<String> excludedTypes = new HashSet<>(16, 1);
-    private static final HashSet<String> excludedDirs = new HashSet<>(16, 1);
     public static final HashSet<String> separateTabs = new HashSet<>(16, 1);
-    private static final HashSet<String> whiteListTypes = new HashSet<>(16, 1);
     public static final HashMap<String, OverViewEntry> overView = new HashMap<>(10);
     public static final HashMap<String, ArrayList<StatEntry>> tabs = new HashMap<>(6);
+    private static final HashSet<String> excludedTypes = new HashSet<>(16, 1);
+    private static final HashSet<String> excludedDirs = new HashSet<>(16, 1);
+    private static final HashSet<String> whiteListTypes = new HashSet<>(16, 1);
+    private static final ArrayList<Pattern> excludedRegexes = new ArrayList<>(16);
     private final FileVisitor<Path> visitor;
     public AtomicBoolean isUpdating = new AtomicBoolean(false);
     public boolean commitHappened = false;
-    private boolean countMiscLines = false;
     public String commitText;
     public Path projectPath;
     Charset charset = StandardCharsets.UTF_8;
+    private boolean countMiscLines = false;
     private DefaultTableModel overviewModel;
     private DefaultTableModel footerModel;
     private JBTable overviewTable;
@@ -110,8 +112,20 @@ public final class Parser {
         visitor = new SimpleFileVisitor<>() {
             @Override
             public FileVisitResult preVisitDirectory(Path path, BasicFileAttributes attrs) {
-                if (excludedDirs.contains(path.toString())) {
+                String pathString = path.toString();
+
+                if (excludedDirs.contains(pathString)) {
                     return FileVisitResult.SKIP_SUBTREE;
+                }
+
+                if (!excludedRegexes.isEmpty()) { // Don't cause slowdown
+                    // Needed for platform independent regex
+                    String relativePath = projectPath.relativize(path).toString().replace('\\','/');
+                    for (Pattern pat : excludedRegexes) {
+                        if (pat.matcher(relativePath).matches()) {
+                            return FileVisitResult.SKIP_SUBTREE;
+                        }
+                    }
                 }
                 return FileVisitResult.CONTINUE;
             }
@@ -129,7 +143,7 @@ public final class Parser {
                 return FileVisitResult.CONTINUE;
             }
         };
-       initializeOverviewTab(); // Comment this when testing - haha this code is a hot mess ... :(.
+        initializeOverviewTab(); // Comment this when testing - haha this code is a hot mess ... :(.
     }
 
     private void initializeOverviewTab() {
@@ -172,6 +186,7 @@ public final class Parser {
         excludedDirs.clear();
         separateTabs.clear();
         whiteListTypes.clear();
+        excludedRegexes.clear();
 
         Collections.addAll(excludedTypes, save.excludedFileTypes.split(";"));
         Collections.addAll(separateTabs, save.separateTabsTypes.split(";"));
@@ -234,6 +249,10 @@ public final class Parser {
 
         charset = ParsingUtil.getCharsetFallback(save.charSet, StandardCharsets.UTF_8);
         countMiscLines = save.countMiscLines;
+
+        for (String regex : save.excludedRegex) {
+            excludedRegexes.add(Pattern.compile(regex));
+        }
     }
 
     public void updatePane(boolean isSilentUpdate, Path path) {
@@ -296,7 +315,6 @@ public final class Parser {
         overviewModel.setDataVector(data, new String[]{"Extension", "Count", "Size SUM", "Size MIN", "Size MAX", "Size AVG", "Lines", "Lines MIN", "Lines MAX", "Lines AVG", "Lines CODE"});
         setupTable(overviewTable, UIHelper.OverViewTableCellRenderer, UIHelper.getOverViewTableSorter(new TableRowSorter<>(overviewModel)));
         footerModel.setDataVector(footerData, new String[]{"", "", "", "", "", "", "", "", "", "", ""});
-
 
         //Adds the new timeline tab as the second tab ONLY IF it's a normal refresh
         if (path.equals(projectPath)) {
@@ -418,13 +436,13 @@ public final class Parser {
                             if (stateFlags.multiLineCommentJava) {
                                 entry.commentLines++;
                             }
-                            if(stateFlags.multiLineLIneDocPython){
+                            if (stateFlags.multiLineLIneDocPython) {
                                 entry.docLines++;
                             }
                             if (line.contains("*/")) {
                                 stateFlags.multiLineCommentJava = false;
                                 stateFlags.multiLineDocJava = false;
-                            }else if(line.contains("\"\"\"")) {
+                            } else if (line.contains("\"\"\"")) {
                                 stateFlags.multiLineLIneDocPython = false;
                             }
                         } else {
@@ -441,14 +459,13 @@ public final class Parser {
                                     entry.commentLines--;
                                     entry.docLines++;
                                 }
-                            }else if(line.startsWith("\"\"\"")){
-                                stateFlags.multiLineLIneDocPython= true;
-                                if(line.contains("\"\"\"")){
+                            } else if (line.startsWith("\"\"\"")) {
+                                stateFlags.multiLineLIneDocPython = true;
+                                if (line.contains("\"\"\"")) {
                                     entry.docLines++;
                                     stateFlags.multiLineLIneDocPython = false;
                                 }
-                            }
-                            else if (line.startsWith("import") || line.startsWith("#include") || line.startsWith("package") || line.startsWith("from")) {
+                            } else if (line.startsWith("import") || line.startsWith("#include") || line.startsWith("package") || line.startsWith("from")) {
                                 miscLines[0]++;
                             }
                         }
@@ -467,7 +484,7 @@ public final class Parser {
             }
             //setting separate tab entry data
             entry.sourceCodeLines = entry.totalLines - entry.blankLines - entry.commentLines - entry.docLines;
-            if(!countMiscLines) entry.sourceCodeLines-= miscLines[0];
+            if (!countMiscLines) entry.sourceCodeLines -= miscLines[0];
 
             //setting over view entry data
             overView.get(extension).addValues(size, entry.totalLines, entry.sourceCodeLines);

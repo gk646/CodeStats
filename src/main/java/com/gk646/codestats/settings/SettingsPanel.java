@@ -31,15 +31,17 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.ui.ComboBox;
+import com.intellij.ui.JBColor;
 import com.intellij.ui.components.JBCheckBox;
+import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.JBTextField;
-import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
+import javax.swing.Box;
 import javax.swing.DefaultListModel;
 import javax.swing.JButton;
 import javax.swing.JComponent;
@@ -49,9 +51,12 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import java.awt.BorderLayout;
 import java.awt.Dimension;
+import java.awt.Font;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.util.Collections;
+import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;
 
 public final class SettingsPanel implements Configurable {
     public static final JBCheckBox disableTimeLine = new JBCheckBox("Disable TimeLine");
@@ -71,6 +76,7 @@ public final class SettingsPanel implements Configurable {
     private static final ComboBox<String> charsetMenu = UIHelper.getCharsetMenu();
 
     private DefaultListModel<String> excludedDirectoriesField;
+    private DefaultListModel<String> excludedRegexField;
 
     @Contract(pure = true)
     @Nls(capitalization = Nls.Capitalization.Title)
@@ -88,11 +94,25 @@ public final class SettingsPanel implements Configurable {
         addTextFieldWithLabel(panel, "White-listed File Types:", includedFileTypesField, "(Example: txt;md)", constraints);
         addTextFieldWithLabel(panel, "Separate Tabs Types:", separateTabsField, "(Example: html;css)", constraints);
 
-        addDirectoryListSection(panel, constraints);
+        constraints.gridy++;
+
+        excludedDirectoriesField = new DefaultListModel<>();
+        excludedRegexField = new DefaultListModel<>();
+        addDirectoryListSection(panel, constraints, excludedDirectoriesField, "Excluded Directories:");
+        addRegexListSection(panel, constraints, excludedRegexField, "Exclude Regexes:");
+
+        JBLabel infoLabel = new JBLabel("Evaluated relative to project root (e.g. 'src' excludes 'projectPath/src'). Uses '/' as separator on all platforms");
+        infoLabel.setForeground(JBColor.GRAY);
+        infoLabel.setFont(infoLabel.getFont().deriveFont(Font.ITALIC));
+        constraints.gridx = 1;
+        panel.add(infoLabel, constraints);
+
+        constraints.gridy++;
+        panel.add(Box.createVerticalStrut(20),constraints);
+
         addCheckBoxes(panel, constraints);
         addCharsetSection(panel, constraints);
         addTimeLineSection(panel, constraints);
-
 
         JPanel wrapperPanel = new JPanel(new BorderLayout());
         wrapperPanel.add(panel, BorderLayout.NORTH);
@@ -115,7 +135,8 @@ public final class SettingsPanel implements Configurable {
                 || disableAutomaticUpdate.isSelected() != settings.disableAutoUpdate
                 || disableTimeLine.isSelected() != settings.disableTimeLine
                 || !charsetMenu.getItemAt(charsetMenu.getSelectedIndex()).equals(settings.charSet)
-                || !Collections.list(excludedDirectoriesField.elements()).equals(settings.excludedDirectories);
+                || !Collections.list(excludedDirectoriesField.elements()).equals(settings.excludedDirectories)
+                || !Collections.list(excludedRegexField.elements()).equals(settings.excludedRegex);
     }
 
     @Override
@@ -134,12 +155,15 @@ public final class SettingsPanel implements Configurable {
         exclude_python.setSelected(settings.isExcludePython);
         countMiscLines.setSelected(settings.countMiscLines);
 
-
         excludedDirectoriesField.clear();
         for (String dir : settings.excludedDirectories) {
             excludedDirectoriesField.addElement(dir);
         }
 
+        excludedRegexField.clear();
+        for (String dir : settings.excludedRegex) {
+            excludedRegexField.addElement(dir);
+        }
         charsetMenu.setSelectedItem(settings.charSet);
         excludedFileTypesField.setText(settings.excludedFileTypes);
         includedFileTypesField.setText(settings.includedFileTypes);
@@ -150,6 +174,7 @@ public final class SettingsPanel implements Configurable {
     public void apply() {
         PersistentSave settings = PersistentSave.getInstance();
         settings.excludedDirectories = Collections.list(excludedDirectoriesField.elements());
+        settings.excludedRegex = Collections.list(excludedRegexField.elements());
         settings.excludedFileTypes = excludedFileTypesField.getText();
         settings.includedFileTypes = includedFileTypesField.getText();
         settings.separateTabsTypes = separateTabsField.getText();
@@ -191,49 +216,105 @@ public final class SettingsPanel implements Configurable {
         panel.add(new JLabel(exampleText), constraints);
     }
 
-    private void addDirectoryListSection(@NotNull JPanel panel, @NotNull GridBagConstraints constraints) {
-        excludedDirectoriesField = new DefaultListModel<>();
-        var list = new JBList<>(excludedDirectoriesField);
+    private void addRegexListSection(
+            @NotNull JPanel panel,
+            @NotNull GridBagConstraints constraints,
+            @NotNull DefaultListModel<String> regexListModel,
+            @NotNull String labelName) {
 
+        var list = new JBList<>(regexListModel);
         JScrollPane scrollPane = new JBScrollPane(list);
         scrollPane.setPreferredSize(new Dimension(50, 120));
 
-        //add button
         JButton addButton = new JButton("Add...");
         addButton.addActionListener(e -> {
-            FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor();
-            FileChooser.chooseFile(descriptor, CodeStatsWindow.project, null, file -> excludedDirectoriesField.addElement(file.getPath()));
+            // Prompt for regex input
+            String input = JOptionPane.showInputDialog(panel, "Enter a valid regex:", "Add Regex", JOptionPane.PLAIN_MESSAGE);
+            if (input != null && !input.trim().isEmpty()) {
+                try {
+                    Pattern.compile(input);
+                    regexListModel.addElement(input);
+                } catch (PatternSyntaxException ex) {
+                    JOptionPane.showMessageDialog(panel, "Invalid regex: " + ex.getDescription(), "Error", JOptionPane.ERROR_MESSAGE);
+                }
+            }
         });
 
-        //remove button
+        // Remove button
         var removeButton = new JButton("Remove");
         removeButton.setEnabled(false);
         removeButton.addActionListener(e -> {
             int selectedIndex = list.getSelectedIndex();
             if (selectedIndex != -1) {
-                excludedDirectoriesField.remove(selectedIndex);
+                regexListModel.remove(selectedIndex);
                 list.clearSelection();
             }
         });
 
+        // Enable/disable remove button based on selection
         list.addListSelectionListener(e -> removeButton.setEnabled(list.getSelectedIndex() != -1));
 
+        // Add components to the panel
         constraints.gridx = 0;
-        constraints.gridy++;
-        panel.add(new JLabel("Excluded Directories:"), constraints);
+        panel.add(new JLabel(labelName), constraints);
 
         constraints.gridx = 1;
         panel.add(scrollPane, constraints);
 
-        constraints.insets = JBUI.insets(1);
         constraints.gridx = 2;
         panel.add(addButton, constraints);
 
-        constraints.insets = JBUI.insets(1);
-        constraints.anchor = GridBagConstraints.NORTH;
+        constraints.gridx = 2;
+
+        constraints.gridy++;
+        panel.add(removeButton, constraints);
+        constraints.gridy += 3;
+    }
+
+    private void addDirectoryListSection(
+            @NotNull JPanel panel,
+            @NotNull GridBagConstraints constraints,
+            @NotNull DefaultListModel<String> directoryListModel,
+            @NotNull String labelName) {
+        var list = new JBList<>(directoryListModel);
+        JScrollPane scrollPane = new JBScrollPane(list);
+        scrollPane.setPreferredSize(new Dimension(50, 120));
+
+        // Add button
+        JButton addButton = new JButton("Add...");
+        addButton.addActionListener(e -> {
+            FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor();
+            FileChooser.chooseFile(descriptor, CodeStatsWindow.project, null, file -> directoryListModel.addElement(file.getPath()));
+        });
+
+        // Remove button
+        var removeButton = new JButton("Remove");
+        removeButton.setEnabled(false);
+        removeButton.addActionListener(e -> {
+            int selectedIndex = list.getSelectedIndex();
+            if (selectedIndex != -1) {
+                directoryListModel.remove(selectedIndex);
+                list.clearSelection();
+            }
+        });
+
+        // Enable/disable remove button based on selection
+        list.addListSelectionListener(e -> removeButton.setEnabled(list.getSelectedIndex() != -1));
+
+        // Add components to the panel
+        constraints.gridx = 0;
+        panel.add(new JLabel(labelName), constraints);
+
+        constraints.gridx = 1;
+        panel.add(scrollPane, constraints);
+
+        constraints.gridx = 2;
+        panel.add(addButton, constraints);
+
         constraints.gridx = 2;
         constraints.gridy++;
         panel.add(removeButton, constraints);
+        constraints.gridy++;
     }
 
     private void addCheckBoxes(@NotNull JPanel panel, @NotNull GridBagConstraints constraints) {

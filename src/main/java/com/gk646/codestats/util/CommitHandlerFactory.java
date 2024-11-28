@@ -35,9 +35,12 @@ public final class CommitHandlerFactory extends CheckinHandlerFactory {
 
     @Override
     public @NotNull CheckinHandler createHandler(@NotNull CheckinProjectPanel panel, @NotNull CommitContext commitContext) {
-        if(CodeStatsWindow.project == null)CodeStatsWindow.SetProject(panel.getProject());
+        if (panel.getProject().isDefault()) {
+            return new CommitListener();
+        }
+        CodeStatsWindow.SetProject(panel.getProject());
         var commitMsg = panel.getCommitMessage();
-        if (commitMsg.length() > 25) {
+        if (commitMsg.length() > 50) {
             CodeStatsWindow.PARSER.commitText = commitMsg.substring(0, 50);
         } else {
             CodeStatsWindow.PARSER.commitText = commitMsg;
