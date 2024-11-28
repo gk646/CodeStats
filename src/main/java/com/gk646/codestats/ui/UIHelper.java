@@ -29,6 +29,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.ActionToolbar;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.ui.JBColor;
@@ -182,13 +183,20 @@ public final class UIHelper {
     }
 
     public static @NotNull ActionButton createButton(String text, String description, @NotNull Icon icon, Runnable action) {
+        // Define the action
         var anAction = new AnAction(text, description, icon) {
             @Override
             public void actionPerformed(@NotNull AnActionEvent e) {
                 action.run();
             }
         };
-        return new ActionButton(anAction, anAction.getTemplatePresentation(), text, ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE);
+
+        Presentation presentation = new Presentation();
+        presentation.setText(text);
+        presentation.setDescription(description);
+        presentation.setIcon(icon);
+
+        return new ActionButton(anAction, presentation, text, ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE);
     }
 
     public static void createMainUI(@NotNull GridBagConstraints gbc, List<ActionButton> buttons, @NotNull JPanel mainPanel) {

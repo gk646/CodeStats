@@ -68,8 +68,10 @@ public final class PersistentSave implements PersistentStateComponent<Persistent
     public boolean disableTimeLine = false;
     public boolean countMiscLines = false;
     @XCollection(propertyElementName = "excludedDirs", elementTypes = String.class)
-
     public List<String> excludedDirectories = new ArrayList<>();
+
+    @XCollection(propertyElementName = "excludedRegexes", elementTypes = String.class)
+    public List<String> excludedRegex = new ArrayList<>();
 
     public static PersistentSave getInstance() {
         return CodeStatsWindow.project.getService(PersistentSave.class);

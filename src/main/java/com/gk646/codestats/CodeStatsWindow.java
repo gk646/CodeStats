@@ -57,7 +57,7 @@ import java.util.Objects;
 public final class CodeStatsWindow implements ToolWindowFactory, ToolWindowManagerListener, DumbAware, StartupActivity.DumbAware {
     public static final JTabbedPane TABBED_PANE = new JBTabbedPane();
     public static final LineChartPanel TIME_LINE = new LineChartPanel(TABBED_PANE);
-    public static final Parser PARSER = new Parser();
+    public static Parser PARSER;
     public static Project project;
 
     /**
@@ -80,6 +80,17 @@ public final class CodeStatsWindow implements ToolWindowFactory, ToolWindowManag
         update(isSilentUpdate, PARSER.projectPath);
     }
 
+    public static void SetProject(Project project) {
+        if (project.isDefault()) return;
+        System.out.println("Set Project");
+        CodeStatsWindow.project = project;
+        if (PARSER == null) {
+            PARSER = new Parser();
+        }
+        PARSER.projectPath = Path.of(Objects.requireNonNull(project.getBasePath()));
+        PARSER.updateState();
+    }
+
     /**
      * Method is called on project startup <br>
      * This is added as a safety layer to set essential variables to provide e.g. the CodeStats settings page.
@@ -91,12 +102,6 @@ public final class CodeStatsWindow implements ToolWindowFactory, ToolWindowManag
         SetProject(project);
     }
 
-    public static void SetProject(Project project) {
-        CodeStatsWindow.project = project;
-        PARSER.projectPath = Path.of(Objects.requireNonNull(project.getBasePath()));
-        PARSER.updateState();
-    }
-
     @Override
     public void createToolWindowContent(@NotNull Project project, @NotNull ToolWindow toolWindow) {
         SetProject(project);
@@ -105,8 +110,7 @@ public final class CodeStatsWindow implements ToolWindowFactory, ToolWindowManag
 
     private void initUI(@NotNull ToolWindow toolWindow, Project project) {
         ActionButton refreshButton = UIHelper.createButton("Refresh", "Get CodeStats!", AllIcons.Actions.Refresh, () -> CodeStatsWindow.update(false));
-        ActionButton settingsButton = UIHelper.createButton("Settings", "Customize CodeStats!", AllIcons.General.GearPlain,
-                () -> ShowSettingsUtil.getInstance().showSettingsDialog(project, SettingsPanel.class));
+        ActionButton settingsButton = UIHelper.createButton("Settings", "Customize CodeStats!", AllIcons.General.GearPlain, () -> ShowSettingsUtil.getInstance().showSettingsDialog(project, SettingsPanel.class));
         ActionButton directoryChooser = UIHelper.createButton("Scan custom directory", "Choose and scan a custom directory", AllIcons.Actions.Preview, () -> {
             FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor();
             descriptor.setTitle("Select Directory");

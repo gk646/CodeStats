@@ -2,12 +2,12 @@
 <idea-plugin>
     <!-- Unique identifier of the plugin. It should be FQN. It cannot be changed between the plugin versions. -->
     <id>com.gk646.codeStats</id>
-    <version>2.0.2</version>
+    <version>2.0.4</version>
     <!-- Public plugin name should be written in Title Case.
          Guidelines: https://plugins.jetbrains.com/docs/marketplace/plugin-overview-page.html#plugin-name -->
     <name>CodeStats</name>
     <!-- A displayed Vendor name or Organization ID displayed on the Plugins Page. -->
-    <vendor email="" url="https://github.com/gk646/CodeStats">gk646</vendor>
+    <vendor email="gk646@proton.me" url="https://github.com/gk646/CodeStats">gk646</vendor>
 
     <!-- Description of the plugin displayed on the Plugin Page and IDE Plugin Manager.
          Simple HTML elements (text formatting, paragraphs, and lists) can be added inside of <![CDATA[ ]]> tag.
@@ -31,7 +31,7 @@
 <ul>
     <li>Easy-to-use interface with custom tool window</li>
     <li>TimeLine view: Watch your coding progress and activities on a dynamic timeline</li>
-    <li>Customizable via the settings menu</li>
+    <li>Highly customizable via the settings menu with support for regex</li>
     <li>Faster than other popular statistic plugins</li>
 </ul>
 <h3>Getting Started</h3>
@@ -45,7 +45,13 @@
 
 ]]></description>
     <change-notes><![CDATA[
-    <h2>Release 2.0.2</h2>
+     <h2>Release 2.0.4</h2>
+     <p>Added support for excluding directories based on regex!</p>
+     <p>Fixed some bugs that occurred on startup</p>
+     <p>Fixed a bug where the overview tab doesnt update when opening a new project</p>
+    <h2>Release 2.0.3</h2>
+     <p>Fixed a out of bounds access in the commit messages</p>
+   <h2>Release 2.0.2</h2>
      <p>Fixed critical parser bug related to triple quote documentation</p>
     <h2>Release 2.0.1</h2>
      <p>Added option to count the new misc lines as source code (per default they arent)</p>
