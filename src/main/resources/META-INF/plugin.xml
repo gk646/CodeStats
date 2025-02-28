@@ -2,7 +2,7 @@
 <idea-plugin>
     <!-- Unique identifier of the plugin. It should be FQN. It cannot be changed between the plugin versions. -->
     <id>com.gk646.codeStats</id>
-    <version>2.0.4</version>
+    <version>2.0.5</version>
     <!-- Public plugin name should be written in Title Case.
          Guidelines: https://plugins.jetbrains.com/docs/marketplace/plugin-overview-page.html#plugin-name -->
     <name>CodeStats</name>
@@ -45,6 +45,12 @@
 
 ]]></description>
     <change-notes><![CDATA[
+     <h2>Release 2.0.5</h2>
+     <p>Exclude regex now also applies to files. This allows to exclude any file by either:</p>
+      <ul>
+         <li>Adding its absolute name as regex (relative to the root projectPath/src -> src )</li>
+         <li>Adding a general regex that matches the file's name</li>
+      </ul>
      <h2>Release 2.0.4</h2>
      <p>Added support for excluding directories based on regex!</p>
      <p>Fixed some bugs that occurred on startup</p>

@@ -101,7 +101,7 @@ public final class SettingsPanel implements Configurable {
         addDirectoryListSection(panel, constraints, excludedDirectoriesField, "Excluded Directories:");
         addRegexListSection(panel, constraints, excludedRegexField, "Exclude Regexes:");
 
-        JBLabel infoLabel = new JBLabel("Evaluated relative to project root (e.g. 'src' excludes 'projectPath/src'). Uses '/' as separator on all platforms");
+        JBLabel infoLabel = new JBLabel("Relative to project root (e.g. 'src' excludes 'projectPath/src'). Uses '/' as separator on all platforms");
         infoLabel.setForeground(JBColor.GRAY);
         infoLabel.setFont(infoLabel.getFont().deriveFont(Font.ITALIC));
         constraints.gridx = 1;

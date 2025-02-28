@@ -133,6 +133,17 @@ public final class Parser {
             @Override
             public FileVisitResult visitFile(Path path, BasicFileAttributes attrs) {
                 String extension = ParsingUtil.getFileExtension(path.getFileName().toString());
+
+                if (!excludedRegexes.isEmpty()) { // Don't cause slowdown
+                    // Needed for platform independent regex
+                    String relativePath = projectPath.relativize(path).toString().replace('\\','/');
+                    for (Pattern pat : excludedRegexes) {
+                        if (pat.matcher(relativePath).matches()) {
+                            return FileVisitResult.CONTINUE;
+                        }
+                    }
+                }
+
                 if (whiteListTypes.isEmpty()) {
                     if (!extension.isEmpty() && !excludedTypes.contains(extension)) {
                         parseFile(path, extension);
